@@ -1,9 +1,9 @@
+import { loginUsuario } from '../supabase.js';
 import { renderizarInicio } from './inicio.js';
 
 export function renderizarAutenticacao() {
     const app = document.getElementById('app');
 
-    // Construção do Layout (HTML + Tailwind CSS inline nas classes)
     const html = `
         <div class="min-h-screen flex flex-col justify-center items-center p-6 relative overflow-hidden bg-fundo">
             
@@ -102,7 +102,8 @@ export function renderizarAutenticacao() {
         }
     });
 
-    form.addEventListener('submit', (e) => {
+    // MUDANÇA AQUI: Transformado em função assíncrona para aguardar a rede do Supabase
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const usuario = usuarioInput.value.trim();
@@ -111,7 +112,11 @@ export function renderizarAutenticacao() {
 
         msgErro.classList.add('hidden');
 
-        if (usuario === 'admin' && senha === 'admin123') {
+        // CHAMADA REAL AO BACKEND (Supabase)
+        const { user, error } = await loginUsuario(usuario, senha);
+
+        // Se o usuário existir e não houver erros na validação:
+        if (user && !error) {
             
             if (lembrar) {
                 localStorage.setItem('atalaia_user_saved', usuario);
@@ -130,15 +135,14 @@ export function renderizarAutenticacao() {
             `;
 
             setTimeout(() => {
-                console.log("Redirecionando para a Dashboard...");
-                // Conexão real com a página de início
                 renderizarInicio();
             }, 2000);
 
         } else {
+            // Falha na Autenticação (E-mail ou senha errados no Supabase)
             msgErro.innerHTML = `
                 <i class="ph-fill ph-warning-circle text-lg"></i>
-                <span>Credenciais incorretas. Tente <b>admin</b> e <b>admin123</b>.</span>
+                <span>Credenciais incorretas ou conta inexistente.</span>
             `;
             msgErro.classList.remove('hidden');
 
@@ -150,5 +154,3 @@ export function renderizarAutenticacao() {
         }
     });
 }
-
-renderizarAutenticacao();
