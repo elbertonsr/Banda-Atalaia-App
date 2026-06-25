@@ -137,14 +137,16 @@ export function renderizarAutenticacao() {
                 </div>
             `;
 
-            // Simula o tempo de rede e redireciona para inicio.js
+            // Simula o tempo de rede e redireciona dinamicamente para inicio.js
             setTimeout(() => {
-                console.log("Redirecionando para a Dashboard...");
-                // FUTURO: Aqui importaremos e executaremos inicio.js
-                // import('./inicio.js').then(modulo => modulo.renderizarInicio());
-                
-                // Mensagem temporária para você enquanto as outras páginas não existem
-                app.innerHTML = `<div class="min-h-screen flex items-center justify-center text-ouro text-2xl font-bold bg-fundo">Página "inicio.js" será carregada aqui!</div>`;
+                import('./inicio.js')
+                    .then(modulo => {
+                        modulo.renderizarInicio();
+                    })
+                    .catch(erro => {
+                        console.error("Erro ao carregar a página inicial:", erro);
+                        app.innerHTML = `<div class="text-red-500 text-center p-10">Erro ao carregar a página inicial.</div>`;
+                    });
             }, 2000);
 
         } else {
