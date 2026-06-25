@@ -1,3 +1,5 @@
+import { renderizarInicio } from './inicio.js';
+
 export function renderizarAutenticacao() {
     const app = document.getElementById('app');
 
@@ -17,7 +19,7 @@ export function renderizarAutenticacao() {
                 </div>
 
                 <div class="text-center mb-8 w-full">
-                    <h1 class="text-2xl sm:text-3xl font-bold text-ouro mb-2 tracking-wide">Portal Atalaia</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-ouro mb-2 tracking-wide">Banda Atalaia App</h1>
                     <p class="text-sm text-texto/70 italic leading-relaxed">
                         "E, sobre tudo isto, revesti-vos de amor, que é o vínculo da perfeição." <br>
                         <span class="text-xs text-ouro-claro opacity-80">(Colossenses 3:14)</span>
@@ -73,10 +75,7 @@ export function renderizarAutenticacao() {
         </div>
     `;
 
-    // Injeta a estrutura na div #app
     app.innerHTML = html;
-
-    // ----- LÓGICA E COMPORTAMENTOS (UX) ----- //
 
     const form = document.getElementById('login-form');
     const toggleSenhaBtn = document.getElementById('toggle-senha');
@@ -85,14 +84,12 @@ export function renderizarAutenticacao() {
     const msgErro = document.getElementById('msg-erro');
     const usuarioInput = document.getElementById('usuario');
 
-    // Recupera usuário salvo anteriormente (se houver)
     const usuarioSalvo = localStorage.getItem('atalaia_user_saved');
     if(usuarioSalvo) {
         usuarioInput.value = usuarioSalvo;
         document.getElementById('lembrar').checked = true;
     }
 
-    // Ação: Mostrar/Esconder Senha
     toggleSenhaBtn.addEventListener('click', () => {
         if (senhaInput.type === 'password') {
             senhaInput.type = 'text';
@@ -105,28 +102,23 @@ export function renderizarAutenticacao() {
         }
     });
 
-    // Ação: Submeter Formulário de Login
     form.addEventListener('submit', (e) => {
-        e.preventDefault(); // Impede o recarregamento da página
+        e.preventDefault();
         
         const usuario = usuarioInput.value.trim();
         const senha = senhaInput.value;
         const lembrar = document.getElementById('lembrar').checked;
 
-        // Limpa erro anterior
         msgErro.classList.add('hidden');
 
-        // Validando Credenciais de Teste (Admin)
         if (usuario === 'admin' && senha === 'admin123') {
             
-            // Gerencia o "Salvar usuário"
             if (lembrar) {
                 localStorage.setItem('atalaia_user_saved', usuario);
             } else {
                 localStorage.removeItem('atalaia_user_saved');
             }
 
-            // UI de Sucesso Visual
             form.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-6 animate-pulse">
                     <i class="ph-fill ph-check-circle text-6xl text-ouro-claro mb-4 drop-shadow-[0_0_15px_rgba(242,203,5,0.5)]"></i>
@@ -137,27 +129,19 @@ export function renderizarAutenticacao() {
                 </div>
             `;
 
-            // Simula o tempo de rede e redireciona dinamicamente para inicio.js
             setTimeout(() => {
-                import('./inicio.js')
-                    .then(modulo => {
-                        modulo.renderizarInicio();
-                    })
-                    .catch(erro => {
-                        console.error("Erro ao carregar a página inicial:", erro);
-                        app.innerHTML = `<div class="text-red-500 text-center p-10">Erro ao carregar a página inicial.</div>`;
-                    });
+                console.log("Redirecionando para a Dashboard...");
+                // Conexão real com a página de início
+                renderizarInicio();
             }, 2000);
 
         } else {
-            // Falha na Autenticação
             msgErro.innerHTML = `
                 <i class="ph-fill ph-warning-circle text-lg"></i>
                 <span>Credenciais incorretas. Tente <b>admin</b> e <b>admin123</b>.</span>
             `;
             msgErro.classList.remove('hidden');
 
-            // Efeito visual de tremor (shake) no erro
             const card = document.querySelector('.max-w-\\[400px\\]');
             card.classList.add('translate-x-2');
             setTimeout(() => card.classList.replace('translate-x-2', '-translate-x-2'), 100);
@@ -167,5 +151,4 @@ export function renderizarAutenticacao() {
     });
 }
 
-// Inicializa o módulo automaticamente ao ser carregado
 renderizarAutenticacao();
