@@ -1,16 +1,14 @@
 /**
- * BANDA ATALAIA APP - Core de Persistência e Autenticação (Supabase)
+ * BANDA ATALAIA APP - Core de Persistência, Autenticação e Storage
  * Arquitetura: Vanilla JS + ES Modules
- * Desenvolvido seguindo as melhores práticas de segurança e performance.
  */
 
-// Importação oficial do cliente Supabase otimizado para ES Modules
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // -------------------------------------------------------------------------
 // 1. CONFIGURAÇÕES DE CONEXÃO
 // -------------------------------------------------------------------------
-// SUBSTITUA PELAS CREDENCIAIS DO SEU PAINEL DO SUPABASE (Project Settings > API)
+// SUBSTITUA PELAS CREDENCIAIS DO SEU PAINEL DO SUPABASE
 const SUPABASE_URL = 'https://tawjxujmihcenrmhzqmw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhd2p4dWptaWhjZW5ybWh6cW13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMDc5MzksImV4cCI6MjA5NzY4MzkzOX0.kssIjs_TJNtcIEH5G61_aZIvc9eDBR_iNDs8fYmPbAA';
 
@@ -23,13 +21,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // -------------------------------------------------------------------------
 // 2. MÓDULO DE AUTENTICAÇÃO (AUTH)
 // -------------------------------------------------------------------------
-
-/**
- * Realiza o login utilizando e-mail e senha no Supabase Auth.
- * @param {string} email 
- * @param {string} senha 
- * @returns {Promise<{user: object, error: object}>}
- */
 export async function loginUsuario(email, senha) {
     try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -44,20 +35,12 @@ export async function loginUsuario(email, senha) {
     }
 }
 
-/**
- * Encerra a sessão ativa do usuário atual.
- * @returns {Promise<{error: object|null}>}
- */
 export async function logoutUsuario() {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Erro ao deslogar:", error.message);
     return { error };
 }
 
-/**
- * Retorna os dados da sessão do usuário autenticado no momento.
- * @returns {Promise<object|null>}
- */
 export async function obterUsuarioAtual() {
     const { data: { user } } = await supabase.auth.getUser();
     return user;
@@ -66,12 +49,6 @@ export async function obterUsuarioAtual() {
 // -------------------------------------------------------------------------
 // 3. MÓDULO DE BANCO DE DADOS (DATABASE - PERFIS)
 // -------------------------------------------------------------------------
-
-/**
- * Recupera as informações customizadas do perfil do membro da igreja.
- * @param {string} userId - UUID vindo do Supabase Auth
- * @returns {Promise<{perfil: object|null, error: object|null}>}
- */
 export async function obterPerfilMembro(userId) {
     try {
         const { data, error } = await supabase
@@ -82,7 +59,6 @@ export async function obterPerfilMembro(userId) {
 
         if (error) throw error;
 
-        // Mapeia o snake_case do banco para o camelCase padronizado nas telas JS
         return {
             perfil: {
                 nome: data.nome,
@@ -97,12 +73,6 @@ export async function obterPerfilMembro(userId) {
     }
 }
 
-/**
- * Atualiza os dados de perfil (Nome, URL da Foto e Funções na Banda) no banco.
- * @param {string} userId - UUID do usuário
- * @param {object} dadosNovos - Objeto contendo { nome, fotoUrl, funcoes }
- * @returns {Promise<{sucesso: boolean, error: object|null}>}
- */
 export async function atualizarPerfilMembro(userId, dadosNovos) {
     try {
         const { error } = await supabase
@@ -123,11 +93,6 @@ export async function atualizarPerfilMembro(userId, dadosNovos) {
     }
 }
 
-/**
- * Atualiza a senha da conta do usuário logado diretamente no módulo Auth.
- * @param {string} novaSenha 
- * @returns {Promise<{sucesso: boolean, error: object|null}>}
- */
 export async function atualizarSenhaUsuario(novaSenha) {
     try {
         const { error } = await supabase.auth.updateUser({
@@ -138,5 +103,39 @@ export async function atualizarSenhaUsuario(novaSenha) {
     } catch (error) {
         console.error("Erro ao modificar senha de acesso:", error.message);
         return { sucesso: false, error };
+    }
+}
+
+// -------------------------------------------------------------------------
+// 4. MÓDULO DE STORAGE (UPLOAD DE ARQUIVOS/FOTOS)
+// -------------------------------------------------------------------------
+/**
+ * Faz o upload do arquivo de imagem física para o Supabase Storage.
+ * @param {string} userId - ID do usuário (usado para organizar as pastas)
+ * @param {File} arquivo - Arquivo físico selecionado pelo input do dispositivo
+ * @returns {Promise<{url: string|null, error: object|null}>}
+ */
+export async function uploadFotoPerfil(userId, arquivo) {
+    try {
+        // Extrai a extensão do arquivo (ex: jpg, png)
+        const fileExt = arquivo.name.split('.').pop();
+        // Cria um nome de arquivo seguro e único para evitar cache de imagens velhas
+        const fileName = `${userId}_${Date.now()}.${fileExt}`;
+        const filePath = `${userId}/${fileName}`;
+
+        // Envia para o bucket chamado 'avatars'
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, arquivo, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Recupera a URL pública definitiva da imagem hospedada
+        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        
+        return { url: data.publicUrl, error: null };
+    } catch (error) {
+        console.error("Erro no upload da imagem:", error.message);
+        return { url: null, error };
     }
 }
