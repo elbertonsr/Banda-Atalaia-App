@@ -15,7 +15,7 @@ export function renderizarInicio() {
         { id: 'inicio', label: 'Início', iconePadrao: 'ph ph-house', iconeAtivo: 'ph-fill ph-house' },
         { id: 'agenda', label: 'Agenda', iconePadrao: 'ph ph-calendar-blank', iconeAtivo: 'ph-fill ph-calendar-blank' },
         { id: 'repertorio', label: 'Repertório', iconePadrao: 'ph ph-playlist', iconeAtivo: 'ph-fill ph-playlist' },
-        { id: 'avisos', label: 'Avisos', iconePadrao: 'ph ph-bell', iconeAtivo: 'ph-fill ph-bell' }, // Ponto vermelho removido
+        { id: 'avisos', label: 'Avisos', iconePadrao: 'ph ph-bell', iconeAtivo: 'ph-fill ph-bell' }, 
         { id: 'financeiro', label: 'Finanças', iconePadrao: 'ph ph-currency-dollar', iconeAtivo: 'ph-fill ph-currency-dollar' }
     ];
 
@@ -41,7 +41,7 @@ export function renderizarInicio() {
                     </div>
                     
                     <div class="flex flex-col">
-                        <span class="text-[10px] text-texto/50 font-bold tracking-widest uppercase">Portal Atalaia</span>
+                        <span class="text-[10px] text-texto/50 font-bold tracking-widest uppercase">Banda Atalaia App</span>
                         <span class="text-base text-texto font-medium leading-tight">Olá, <span class="font-bold text-ouro">${usuarioLogado.nome}</span></span>
                     </div>
 
@@ -53,11 +53,11 @@ export function renderizarInicio() {
             </header>
 
             <main id="conteudo-principal" class="w-full min-h-screen pt-28 pb-32 px-6 flex flex-col items-center justify-center relative z-10">
-                </main>
+            </main>
 
             <nav class="fixed bottom-6 left-0 w-full z-50 px-6 pointer-events-none">
                 <div id="tab-bar-container" class="pointer-events-auto max-w-[400px] mx-auto flex justify-between items-end bg-transparent">
-                    </div>
+                </div>
             </nav>
             
         </div>
@@ -88,9 +88,6 @@ export function renderizarInicio() {
         container.innerHTML = abas.map(aba => {
             const isAtiva = aba.id === abaAtiva;
             
-            // CORREÇÃO DE VISIBILIDADE:
-            // Inativos recebem text-texto/70 (70% de opacidade) para garantir visibilidade contra o fundo escuro.
-            // Ativos ganham a cor ouro e um brilho (drop-shadow).
             const corIcone = isAtiva 
                 ? 'text-ouro drop-shadow-[0_0_12px_rgba(242,183,5,0.5)] scale-110' 
                 : 'text-texto/70 hover:text-texto transition-colors scale-100';
@@ -118,17 +115,16 @@ export function renderizarInicio() {
         container.querySelectorAll('button[data-aba]').forEach(botao => {
             botao.addEventListener('click', (e) => {
                 const destino = e.currentTarget.getAttribute('data-aba');
-                // Só processa se o usuário clicar em uma aba diferente da atual
                 if (destino !== abaAtiva) {
                     abaAtiva = destino;
-                    renderizarTabBar();      // Atualiza cores e textos dos ícones
-                    renderizarConteudoAba(); // Muda o conteúdo da tela
+                    renderizarTabBar();      
+                    renderizarConteudoAba(); 
                 }
             });
         });
     }
 
-    // Adiciona uma pequena animação CSS global injetada via JS (para o surgimento do texto)
+    // Adiciona uma pequena animação CSS global injetada via JS (para o surgimento do texto, bloqueio de zoom e seleção)
     if (!document.getElementById('animacao-tab')) {
         const style = document.createElement('style');
         style.id = 'animacao-tab';
@@ -140,9 +136,44 @@ export function renderizarInicio() {
             .animate-\\[fadeIn_0\\.3s_ease-in-out\\] {
                 animation: fadeIn 0.3s ease-in-out forwards;
             }
+            /* Bloqueio Absoluto de Seleção de Textos e Elementos */
+            *, *::before, *::after {
+                -webkit-user-select: none !important;
+                -moz-user-select: none !important;
+                -ms-user-select: none !important;
+                user-select: none !important;
+                -webkit-user-drag: none !important;
+            }
+            /* Desativa o realce cinza de toque nativo do webkit (smartphones) */
+            button, a, i, div {
+                -webkit-tap-highlight-color: transparent !important;
+            }
+            /* Força comportamento de scroll e barra o zoom nativo via CSS */
+            html, body, #app {
+                touch-action: pan-x pan-y !important;
+                -webkit-text-size-adjust: 100% !important;
+            }
         `;
         document.head.appendChild(style);
     }
+
+    // Interceptação Programática via JS contra gestos de zoom em Smartphones
+    // 1. Bloqueia Pinch-to-zoom (Zoom de pinça com dois dedos)
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // 2. Bloqueia Double-tap to zoom (Zoom automático por duplo toque na tela)
+    let ultimoToque = 0;
+    document.addEventListener('touchend', (e) => {
+        const agora = new Date().getTime();
+        if (agora - ultimoToque <= 300) {
+            e.preventDefault();
+        }
+        ultimoToque = agora;
+    }, { passive: false });
 
     // Executa a primeira renderização
     renderizarTabBar();
