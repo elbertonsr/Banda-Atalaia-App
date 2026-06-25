@@ -1,16 +1,15 @@
+import { renderizarPerfil } from './perfil.js';
+
 export function renderizarInicio() {
     const app = document.getElementById('app');
 
-    // Estado para controlar qual aba está selecionada
     let abaAtiva = 'inicio';
 
-    // Simulação de dados do usuário logado
     const usuarioLogado = {
         nome: "Admin", 
         fotoUrl: "" 
     };
 
-    // Definição estruturada das abas para facilitar a renderização limpa
     const abas = [
         { id: 'inicio', label: 'Início', iconePadrao: 'ph ph-house', iconeAtivo: 'ph-fill ph-house' },
         { id: 'agenda', label: 'Agenda', iconePadrao: 'ph ph-calendar-blank', iconeAtivo: 'ph-fill ph-calendar-blank' },
@@ -26,7 +25,6 @@ export function renderizarInicio() {
         return `<i class="ph-fill ph-user text-2xl text-ouro-claro"></i>`;
     };
 
-    // Estrutura Principal da Tela (Header Fixo + Container + NavBar Suspensa)
     app.innerHTML = `
         <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden">
             
@@ -34,7 +32,7 @@ export function renderizarInicio() {
             <div class="fixed bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full mix-blend-screen filter blur-[150px] opacity-15 pointer-events-none z-0"></div>
 
             <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-4 cursor-pointer" title="Acessar Perfil">
+                <div id="btn-perfil" class="flex items-center gap-4 cursor-pointer" title="Acessar Perfil">
                     
                     <div class="w-11 h-11 rounded-full border border-ouro/40 p-0.5 overflow-hidden bg-black/50 flex items-center justify-center shadow-[0_0_15px_rgba(242,183,5,0.1)]">
                         ${renderizarAvatar()}
@@ -63,7 +61,6 @@ export function renderizarInicio() {
         </div>
     `;
 
-    // Função que atualiza o meio da tela dependendo do ícone clicado
     function renderizarConteudoAba() {
         const container = document.getElementById('conteudo-principal');
         
@@ -81,7 +78,6 @@ export function renderizarInicio() {
         `;
     }
 
-    // Função que constrói e gerencia o estado da Tab Bar
     function renderizarTabBar() {
         const container = document.getElementById('tab-bar-container');
         
@@ -111,7 +107,6 @@ export function renderizarInicio() {
             `;
         }).join('');
 
-        // Adiciona a ação de clique em cada botão
         container.querySelectorAll('button[data-aba]').forEach(botao => {
             botao.addEventListener('click', (e) => {
                 const destino = e.currentTarget.getAttribute('data-aba');
@@ -124,7 +119,11 @@ export function renderizarInicio() {
         });
     }
 
-    // Adiciona uma pequena animação CSS global injetada via JS (para o surgimento do texto, bloqueio de zoom e seleção)
+    // Vincula a ação de clique no avatar para abrir a página de perfil
+    document.getElementById('btn-perfil').addEventListener('click', () => {
+        renderizarPerfil();
+    });
+
     if (!document.getElementById('animacao-tab')) {
         const style = document.createElement('style');
         style.id = 'animacao-tab';
@@ -144,7 +143,6 @@ export function renderizarInicio() {
                 user-select: none !important;
                 -webkit-user-drag: none !important;
             }
-            /* Desativa o realce cinza de toque nativo do webkit (smartphones) */
             button, a, i, div {
                 -webkit-tap-highlight-color: transparent !important;
             }
@@ -158,14 +156,12 @@ export function renderizarInicio() {
     }
 
     // Interceptação Programática via JS contra gestos de zoom em Smartphones
-    // 1. Bloqueia Pinch-to-zoom (Zoom de pinça com dois dedos)
     document.addEventListener('touchstart', (e) => {
         if (e.touches.length > 1) {
             e.preventDefault();
         }
     }, { passive: false });
 
-    // 2. Bloqueia Double-tap to zoom (Zoom automático por duplo toque na tela)
     let ultimoToque = 0;
     document.addEventListener('touchend', (e) => {
         const agora = new Date().getTime();
@@ -175,7 +171,6 @@ export function renderizarInicio() {
         ultimoToque = agora;
     }, { passive: false });
 
-    // Executa a primeira renderização
     renderizarTabBar();
     renderizarConteudoAba();
 }
