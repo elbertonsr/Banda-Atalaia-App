@@ -5,11 +5,12 @@ export function renderizarAutenticacao() {
     const html = `
         <div class="min-h-screen flex flex-col justify-center items-center p-6 relative overflow-hidden bg-fundo">
             
+            <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full mix-blend-screen filter blur-[150px] opacity-20 pointer-events-none"></div>
             <div class="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full mix-blend-screen filter blur-[150px] opacity-30 pointer-events-none"></div>
 
             <div class="relative w-full max-w-[400px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 sm:p-10 shadow-2xl z-10 flex flex-col items-center transform transition-all duration-500">
 
-                <div class="w-28 h-28 sm:w-32 sm:h-32 mb-6 bg-black/30 backdrop-blur-sm flex items-center justify-center overflow-hidden border border-ouro/30 shadow-[0_0_20px_rgba(242,183,5,0.15)]">
+                <div class="w-28 h-28 sm:w-32 sm:h-32 mb-6 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center overflow-hidden border border-ouro/30 shadow-[0_0_20px_rgba(242,183,5,0.15)]">
                     <img src="./logo.png" alt="Logo Banda Atalaia" 
                          class="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                          onerror="this.src='https://via.placeholder.com/4000?text=LOGO';">
