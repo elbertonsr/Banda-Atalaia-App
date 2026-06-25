@@ -10,13 +10,12 @@ export function renderizarAutenticacao() {
 
             <div class="relative w-full max-w-[400px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 sm:p-10 shadow-2xl z-10 flex flex-col items-center transform transition-all duration-500">
 
-                <div class="w-full flex items-center justify-center mb-8">
-                    <div class="w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center overflow-hidden transition-transform duration-700 hover:scale-105">
-                        <img src="./logo.png" alt="Logo Banda Atalaia" 
-                             class="max-w-full max-h-full object-contain"
-                             onerror="this.src='https://via.placeholder.com/4000?text=LOGO';">
-                    </div>
+                <div class="w-28 h-28 sm:w-32 sm:h-32 mb-6 bg-black/30 backdrop-blur-sm flex items-center justify-center overflow-hidden border border-ouro/30 shadow-[0_0_20px_rgba(242,183,5,0.15)]">
+                    <img src="./logo.png" alt="Logo Banda Atalaia" 
+                         class="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                         onerror="this.src='https://via.placeholder.com/4000?text=LOGO';">
                 </div>
+
                 <div class="text-center mb-8 w-full">
                     <h1 class="text-2xl sm:text-3xl font-bold text-ouro mb-2 tracking-wide">Portal Atalaia</h1>
                     <p class="text-sm text-texto/70 italic leading-relaxed">
@@ -68,7 +67,7 @@ export function renderizarAutenticacao() {
             </div>
 
             <div class="mt-8 text-center text-texto/30 text-xs tracking-wider z-10">
-                <p>USO EXCLUSIVO BANDA ATALAIA 2026</p>
+                <p>USO EXCLUSIVO BANDA ATALAIA</p>
                 <p class="mt-1">&copy; ${new Date().getFullYear()} Ministério de Louvor</p>
             </div>
         </div>
@@ -145,4 +144,26 @@ export function renderizarAutenticacao() {
                 // import('./inicio.js').then(modulo => modulo.renderizarInicio());
                 
                 // Mensagem temporária para você enquanto as outras páginas não existem
-                app.innerHTML = `<div class="min-h-screen flex items-center justify-center text-ouro text-2xl font-bold bg-fundo">Página "inicio.js" será carregada aqui!http://googleusercontent.com/image_generation_content/0
+                app.innerHTML = `<div class="min-h-screen flex items-center justify-center text-ouro text-2xl font-bold bg-fundo">Página "inicio.js" será carregada aqui!</div>`;
+            }, 2000);
+
+        } else {
+            // Falha na Autenticação
+            msgErro.innerHTML = `
+                <i class="ph-fill ph-warning-circle text-lg"></i>
+                <span>Credenciais incorretas. Tente <b>admin</b> e <b>admin123</b>.</span>
+            `;
+            msgErro.classList.remove('hidden');
+
+            // Efeito visual de tremor (shake) no erro
+            const card = document.querySelector('.max-w-\\[400px\\]');
+            card.classList.add('translate-x-2');
+            setTimeout(() => card.classList.replace('translate-x-2', '-translate-x-2'), 100);
+            setTimeout(() => card.classList.replace('-translate-x-2', 'translate-x-2'), 200);
+            setTimeout(() => card.classList.replace('translate-x-2', 'translate-x-0'), 300);
+        }
+    });
+}
+
+// Inicializa o módulo automaticamente ao ser carregado
+renderizarAutenticacao();
