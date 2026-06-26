@@ -1,12 +1,10 @@
 import { loginUsuario } from '../supabase.js';
-import { renderizarInicio } from './inicio.js';
 
 export function renderizarAutenticacao() {
     const app = document.getElementById('app');
 
     const html = `
         <div class="min-h-screen flex flex-col justify-center items-center p-6 relative overflow-hidden bg-fundo">
-            
             <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full mix-blend-screen filter blur-[150px] opacity-20 pointer-events-none"></div>
             <div class="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full mix-blend-screen filter blur-[150px] opacity-30 pointer-events-none"></div>
 
@@ -27,10 +25,9 @@ export function renderizarAutenticacao() {
                 </div>
 
                 <form id="login-form" class="w-full flex flex-col gap-4">
-                    
                     <div class="relative group">
                         <i class="ph ph-user absolute left-4 top-1/2 -translate-y-1/2 text-ouro text-xl transition-colors group-focus-within:text-ouro-brilhante"></i>
-                        <input type="text" id="usuario" placeholder="Usuário" required
+                        <input type="text" id="usuario" placeholder="E-mail" required
                             class="w-full bg-black/40 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-texto placeholder-texto/40 focus:outline-none focus:border-ouro focus:ring-1 focus:ring-ouro transition-all">
                     </div>
 
@@ -50,7 +47,7 @@ export function renderizarAutenticacao() {
                                 <input type="checkbox" id="lembrar" class="peer appearance-none w-4 h-4 rounded border border-white/20 bg-black/40 checked:bg-ouro checked:border-ouro transition-all cursor-pointer">
                                 <i class="ph-bold ph-check absolute text-fundo text-xs opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"></i>
                             </div>
-                            <span class="text-texto/70 group-hover:text-texto transition-colors">Salvar usuário</span>
+                            <span class="text-texto/70 group-hover:text-texto transition-colors">Lembrar</span>
                         </label>
                         <a href="#" class="text-ouro-claro hover:text-ouro-brilhante transition-colors">Recuperar senha</a>
                     </div>
@@ -63,9 +60,8 @@ export function renderizarAutenticacao() {
 
                 <div id="msg-erro" class="mt-4 text-red-400 text-sm hidden font-medium text-center bg-red-500/10 py-3 px-4 rounded-xl w-full border border-red-500/20 backdrop-blur-md flex items-center justify-center gap-2">
                     <i class="ph-fill ph-warning-circle text-lg"></i>
-                    <span>Usuário ou senha inválidos.</span>
+                    <span id="txt-erro">Usuário ou senha inválidos.</span>
                 </div>
-
             </div>
 
             <div class="mt-8 text-center text-texto/30 text-xs tracking-wider z-10">
@@ -82,6 +78,7 @@ export function renderizarAutenticacao() {
     const senhaInput = document.getElementById('senha');
     const iconeSenha = document.getElementById('icone-senha');
     const msgErro = document.getElementById('msg-erro');
+    const txtErro = document.getElementById('txt-erro');
     const usuarioInput = document.getElementById('usuario');
 
     const usuarioSalvo = localStorage.getItem('atalaia_user_saved');
@@ -102,27 +99,20 @@ export function renderizarAutenticacao() {
         }
     });
 
-    // MUDANÇA AQUI: Transformado em função assíncrona para aguardar a rede do Supabase
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const usuario = usuarioInput.value.trim();
         const senha = senhaInput.value;
         const lembrar = document.getElementById('lembrar').checked;
 
         msgErro.classList.add('hidden');
 
-        // CHAMADA REAL AO BACKEND (Supabase)
+        // VALIDAÇÃO COM O BANCO DE DADOS
         const { user, error } = await loginUsuario(usuario, senha);
 
-        // Se o usuário existir e não houver erros na validação:
         if (user && !error) {
-            
-            if (lembrar) {
-                localStorage.setItem('atalaia_user_saved', usuario);
-            } else {
-                localStorage.removeItem('atalaia_user_saved');
-            }
+            if (lembrar) localStorage.setItem('atalaia_user_saved', usuario);
+            else localStorage.removeItem('atalaia_user_saved');
 
             form.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-6 animate-pulse">
@@ -134,16 +124,19 @@ export function renderizarAutenticacao() {
                 </div>
             `;
 
-            setTimeout(() => {
-                renderizarInicio();
+            // IMPORTAÇÃO DINÂMICA (A MÁGICA QUE EVITA A TELA PRETA)
+            setTimeout(async () => {
+                try {
+                    const modulo = await import('./inicio.js');
+                    modulo.renderizarInicio();
+                } catch(err) {
+                    console.error("Erro ao carregar Dashboard:", err);
+                    app.innerHTML = `<div class="h-screen w-full flex items-center justify-center text-red-500 font-bold p-8 text-center bg-fundo">Erro: Arquivo inicio.js não encontrado ou com erro de sintaxe.</div>`;
+                }
             }, 2000);
 
         } else {
-            // Falha na Autenticação (E-mail ou senha errados no Supabase)
-            msgErro.innerHTML = `
-                <i class="ph-fill ph-warning-circle text-lg"></i>
-                <span>Credenciais incorretas ou conta inexistente.</span>
-            `;
+            txtErro.innerText = "Credenciais incorretas ou conta inexistente.";
             msgErro.classList.remove('hidden');
 
             const card = document.querySelector('.max-w-\\[400px\\]');
