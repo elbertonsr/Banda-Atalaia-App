@@ -1,6 +1,6 @@
 /**
  * BANDA ATALAIA APP - Core de Persistência, Autenticação e Storage
- * Arquitetura: Vanilla JS + ES Modules
+ * Arquitetura: Vanilla JS + ES Modules (Robust Load)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -22,7 +22,7 @@ try {
             updateUser: async () => ({ error: { message: "Supabase Offline" } })
         },
         from: () => ({
-            select: () => ({ eq: () => ({ single: async () => ({ error: { message: "Offline" } }) }) }),
+            select: () => ({ eq: () => ({ single: async () => ({ error: { message: "Offline" } }), order: () => ({}) }) }),
             update: () => ({ eq: async () => ({ error: { message: "Offline" } }) })
         }),
         storage: {
@@ -96,21 +96,14 @@ export async function uploadFotoPerfil(userId, arquivo) {
         const fileExt = arquivo.name.split('.').pop();
         const fileName = `${userId}_${Date.now()}.${fileExt}`;
         const filePath = `${userId}/${fileName}`;
-
-        // Adicionado cacheControl e tratamento de exceção focado no upload
-        const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arquivo, { 
-            upsert: true,
-            cacheControl: '3600'
-        });
         
-        if (uploadError) {
-            console.error("Falha no Storage:", uploadError);
-            throw uploadError;
-        }
-
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arquivo, { upsert: true });
+        if (uploadError) throw uploadError;
+        
         const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
         return { url: data.publicUrl, error: null };
     } catch (error) {
+        console.error("Erro interno no uploadFotoPerfil:", error);
         return { url: null, error };
     }
 }
