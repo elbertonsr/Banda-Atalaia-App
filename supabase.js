@@ -1,6 +1,6 @@
 /**
  * BANDA ATALAIA APP - Core de Persistência, Autenticação e Storage
- * Arquitetura: Vanilla JS + ES Modules (Robust Load)
+ * Arquitetura: Vanilla JS + ES Modules
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -11,11 +11,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseInstance;
 
 try {
-    // Tenta inicializar. Se a URL estiver no formato errado, ele não vai dar Tela Preta.
     supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } catch (error) {
     console.error("Erro Fatal na Configuração do Supabase:", error);
-    // Cria um espelho vazio para impedir a tela preta e avisar na interface de login
     supabaseInstance = {
         auth: {
             signInWithPassword: async () => ({ error: { message: "As credenciais do Supabase não foram configuradas." } }),
@@ -99,8 +97,16 @@ export async function uploadFotoPerfil(userId, arquivo) {
         const fileName = `${userId}_${Date.now()}.${fileExt}`;
         const filePath = `${userId}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arquivo, { upsert: true });
-        if (uploadError) throw uploadError;
+        // Adicionado cacheControl e tratamento de exceção focado no upload
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arquivo, { 
+            upsert: true,
+            cacheControl: '3600'
+        });
+        
+        if (uploadError) {
+            console.error("Falha no Storage:", uploadError);
+            throw uploadError;
+        }
 
         const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
         return { url: data.publicUrl, error: null };
