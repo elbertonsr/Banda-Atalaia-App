@@ -6,7 +6,6 @@
     <title>Banda Atalaia App</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <script>
@@ -30,14 +29,32 @@
     </script>
     
     <style>
-        /* Reset básico e prevenção de scroll indesejado em dispositivos móveis */
         body { margin: 0; padding: 0; background-color: #0D0D0D; color: #FFFAFA; }
         * { box-sizing: border-box; }
     </style>
 </head>
 <body class="bg-fundo text-texto min-h-screen antialiased selection:bg-ouro selection:text-fundo">
     
-    <div id="app" class="w-full min-h-screen"></div>
+    <div id="app" class="w-full min-h-screen flex flex-col items-center justify-center">
+        <i class="ph ph-spinner-gap text-4xl text-ouro animate-spin mb-4"></i>
+        <p class="text-texto/50 text-sm tracking-widest uppercase">Iniciando Sistema...</p>
+    </div>
+
+    <script>
+        window.addEventListener('error', function(e) {
+            const appDiv = document.getElementById('app');
+            if(appDiv) {
+                appDiv.innerHTML = `
+                    <div class="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-fundo">
+                        <i class="ph-fill ph-warning-circle text-5xl text-red-500 mb-4"></i>
+                        <h2 class="text-xl font-bold text-texto mb-2">Erro de Carregamento</h2>
+                        <p class="text-sm text-red-400 bg-red-500/10 p-4 rounded-xl border border-red-500/20 w-full max-w-md">${e.message}</p>
+                        <p class="text-xs text-texto/40 mt-6 leading-relaxed">Verifique se o nome da pasta está correto (sem acentos) e se você substituiu as URLs no supabase.js corretamente.</p>
+                    </div>
+                `;
+            }
+        }, true);
+    </script>
 
     <script type="module" src="./paginas/autenticacao.js"></script>
 
