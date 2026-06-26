@@ -5,7 +5,6 @@ export async function renderizarPerfil() {
 
     const usuarioAuth = await obterUsuarioAtual();
     if (!usuarioAuth) {
-        // IMPORTAÇÃO DINÂMICA
         const modulo = await import('./autenticacao.js');
         modulo.renderizarAutenticacao();
         return;
@@ -40,7 +39,7 @@ export async function renderizarPerfil() {
                         <i class="ph ph-arrow-left text-xl text-texto"></i>
                     </button>
                     <span class="text-sm font-bold text-ouro tracking-widest uppercase">Perfil do Membro</span>
-                    <button id="btn-logout" class="w-10 h-10 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/10 flex items-center justify-center transition-all outline-none">
+                    <button id="btn-logout" class="w-10 h-10 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/10 flex items-center justify-center transition-all outline-none" title="Sair do Aplicativo">
                         <i class="ph ph-sign-out text-xl text-red-400"></i>
                     </button>
                 </header>
@@ -230,6 +229,14 @@ export async function renderizarPerfil() {
         `;
         document.head.appendChild(style);
     }
+
+    document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    let ultimoToque = 0;
+    document.addEventListener('touchend', (e) => {
+        const agora = new Date().getTime();
+        if (agora - ultimoToque <= 300) e.preventDefault();
+        ultimoToque = agora;
+    }, { passive: false });
 
     exibirTelaPrincipal();
 }
