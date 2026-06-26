@@ -2,37 +2,36 @@ import { obterUsuarioAtual, obterPerfilMembro, atualizarPerfilMembro, atualizarS
 
 export async function renderizarPerfil() {
     const app = document.getElementById('app');
-
+    
     const usuarioAuth = await obterUsuarioAtual();
     if (!usuarioAuth) {
         const modulo = await import('./autenticacao.js');
         modulo.renderizarAutenticacao();
         return;
     }
-
+    
     let usuario = { id: usuarioAuth.id, nome: "Carregando...", fotoUrl: "", funcoes: [] };
-
+    
     const { perfil } = await obterPerfilMembro(usuario.id);
     if (perfil) {
         usuario.nome = perfil.nome;
         usuario.fotoUrl = perfil.fotoUrl;
         usuario.funcoes = perfil.funcoes;
     }
-
+    
     const funcoesDisponiveis = [
         { nome: 'Líder', icone: 'ph-fill ph-crown' }, { nome: 'Vice Líder', icone: 'ph-fill ph-star' },
         { nome: 'Vocalista', icone: 'ph-fill ph-microphone-stage' }, { nome: 'Guitarrista', icone: 'ph-fill ph-guitar' },
         { nome: 'Contrabaixista', icone: 'ph-fill ph-music-notes-plus' }, { nome: 'Baterista', icone: 'ph-fill ph-drum' },
         { nome: 'Tecladista', icone: 'ph-fill ph-piano' }, { nome: 'Diretor Musical', icone: 'ph-fill ph-sliders' }
     ];
-
+    
     let menuFotoAberto = false;
-
+    
     function exibirTelaPrincipal() {
         app.innerHTML = `
             <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
-                <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[150px] opacity-15 pointer-events-none z-0 transform-gpu"></div>
-                <div class="fixed bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full filter blur-[150px] opacity-15 pointer-events-none z-0 transform-gpu"></div>
+                <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[120px] opacity-10 pointer-events-none z-0"></div>
 
                 <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
                     <button id="btn-voltar-inicio" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center transition-all outline-none">
@@ -81,11 +80,11 @@ export async function renderizarPerfil() {
         `;
         configurarEventosPrincipais();
     }
-
+    
     function exibirTelaEdicao() {
         app.innerHTML = `
             <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
-                <div class="fixed top-[-10%] right-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[150px] opacity-15 pointer-events-none z-0 transform-gpu"></div>
+                <div class="fixed top-[-10%] right-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[120px] opacity-10 pointer-events-none z-0"></div>
 
                 <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
                     <button id="btn-cancelar-edicao" class="text-sm font-medium text-texto/50 hover:text-texto transition-colors outline-none">Cancelar</button>
@@ -124,13 +123,13 @@ export async function renderizarPerfil() {
         `;
         configurarEventosEdicao();
     }
-
+    
     function configurarEventosPrincipais() {
         document.getElementById('btn-voltar-inicio').addEventListener('click', async () => {
             const modulo = await import('./inicio.js');
             modulo.renderizarInicio();
         });
-
+        
         document.getElementById('btn-logout').addEventListener('click', async () => {
             if (confirm("Deseja encerrar sua sessão?")) {
                 await logoutUsuario();
@@ -138,48 +137,47 @@ export async function renderizarPerfil() {
                 modulo.renderizarAutenticacao();
             }
         });
-
+        
         const btnMenuFoto = document.getElementById('btn-menu-foto');
         const dropdownFoto = document.getElementById('dropdown-foto');
         const inputUploadFoto = document.getElementById('input-upload-foto');
-
+        
         btnMenuFoto.addEventListener('click', (e) => {
             e.stopPropagation();
             menuFotoAberto = !menuFotoAberto;
             dropdownFoto.classList.toggle('hidden', !menuFotoAberto);
             dropdownFoto.classList.toggle('flex', menuFotoAberto);
         });
-
+        
         document.addEventListener('click', () => {
             if (menuFotoAberto) {
                 menuFotoAberto = false;
                 dropdownFoto.classList.add('hidden');
             }
         });
-
+        
         document.getElementById('opt-importar-foto').addEventListener('click', () => inputUploadFoto.click());
-
+        
         inputUploadFoto.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
+            
             const overlay = document.getElementById('overlay-loading-foto');
             if (overlay) overlay.classList.remove('hidden');
-
+            
             const { url, error } = await uploadFotoPerfil(usuario.id, file);
-
+            
             if (url && !error) {
                 usuario.fotoUrl = url;
                 await atualizarPerfilMembro(usuario.id, { nome: usuario.nome, fotoUrl: usuario.fotoUrl, funcoes: usuario.funcoes });
-                renderizarPerfil(); 
+                renderizarPerfil();
             } else {
-                // Alerta detalhado para depuração no Supabase
-                const msgErro = error ? (error.message || JSON.stringify(error)) : "Desconhecido";
-                alert(`Erro do Servidor Supabase:\n${msgErro}\n\nVerifique se o Bucket "avatars" é público e se possui Políticas (Policies) de INSERT/UPDATE habilitadas.`);
+                console.error("Erro no retorno do Supabase Storage:", error);
+                alert(`Erro ao enviar foto: ${error?.message || 'Causa provável: o bucket "avatars" não foi criado ou não está como Público no Supabase.'}`);
                 if (overlay) overlay.classList.add('hidden');
             }
         });
-
+        
         document.getElementById('opt-remover-foto').addEventListener('click', async () => {
             if (confirm("Remover foto de perfil?")) {
                 usuario.fotoUrl = "";
@@ -187,38 +185,38 @@ export async function renderizarPerfil() {
                 renderizarPerfil();
             }
         });
-
+        
         document.getElementById('btn-abrir-edicao').addEventListener('click', () => exibirTelaEdicao());
     }
-
+    
     function configurarEventosEdicao() {
         document.getElementById('btn-cancelar-edicao').addEventListener('click', () => exibirTelaPrincipal());
-
+        
         document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
             const novoNome = document.getElementById('input-nome').value.trim();
             const novaSenha = document.getElementById('input-senha').value.trim();
             
             if (!novoNome) return alert("O campo Nome é obrigatório.");
-
+            
             const checkboxes = document.querySelectorAll('.input-funcao-check:checked');
             const novasFuncoes = Array.from(checkboxes).map(cb => cb.value);
-
+            
             if (novaSenha) {
                 if (novaSenha.length < 6) return alert("A senha precisa ter no mínimo 6 dígitos.");
                 await atualizarSenhaUsuario(novaSenha);
             }
-
+            
             const { sucesso } = await atualizarPerfilMembro(usuario.id, {
                 nome: novoNome,
                 fotoUrl: usuario.fotoUrl,
                 funcoes: novasFuncoes
             });
-
+            
             if (sucesso) renderizarPerfil();
             else alert("Erro ao salvar os dados.");
         });
     }
-
+    
     if (!document.getElementById('estilos-perfil')) {
         const style = document.createElement('style');
         style.id = 'estilos-perfil';
@@ -231,14 +229,6 @@ export async function renderizarPerfil() {
         `;
         document.head.appendChild(style);
     }
-
-    document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
-    let ultimoToque = 0;
-    document.addEventListener('touchend', (e) => {
-        const agora = new Date().getTime();
-        if (agora - ultimoToque <= 300) e.preventDefault();
-        ultimoToque = agora;
-    }, { passive: false });
-
+    
     exibirTelaPrincipal();
 }
