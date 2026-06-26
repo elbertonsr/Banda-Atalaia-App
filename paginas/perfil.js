@@ -31,8 +31,8 @@ export async function renderizarPerfil() {
     function exibirTelaPrincipal() {
         app.innerHTML = `
             <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
-                <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full mix-blend-screen filter blur-[150px] opacity-15 pointer-events-none z-0"></div>
-                <div class="fixed bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full mix-blend-screen filter blur-[150px] opacity-15 pointer-events-none z-0"></div>
+                <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[150px] opacity-15 pointer-events-none z-0 transform-gpu"></div>
+                <div class="fixed bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full filter blur-[150px] opacity-15 pointer-events-none z-0 transform-gpu"></div>
 
                 <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
                     <button id="btn-voltar-inicio" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center transition-all outline-none">
@@ -85,7 +85,7 @@ export async function renderizarPerfil() {
     function exibirTelaEdicao() {
         app.innerHTML = `
             <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
-                <div class="fixed top-[-10%] right-[-10%] w-96 h-96 bg-ouro rounded-full mix-blend-screen filter blur-[150px] opacity-15 pointer-events-none z-0"></div>
+                <div class="fixed top-[-10%] right-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[150px] opacity-15 pointer-events-none z-0 transform-gpu"></div>
 
                 <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
                     <button id="btn-cancelar-edicao" class="text-sm font-medium text-texto/50 hover:text-texto transition-colors outline-none">Cancelar</button>
@@ -173,7 +173,9 @@ export async function renderizarPerfil() {
                 await atualizarPerfilMembro(usuario.id, { nome: usuario.nome, fotoUrl: usuario.fotoUrl, funcoes: usuario.funcoes });
                 renderizarPerfil(); 
             } else {
-                alert("Erro ao enviar foto. Verifique a configuração do Supabase.");
+                // Alerta detalhado para depuração no Supabase
+                const msgErro = error ? (error.message || JSON.stringify(error)) : "Desconhecido";
+                alert(`Erro do Servidor Supabase:\n${msgErro}\n\nVerifique se o Bucket "avatars" é público e se possui Políticas (Policies) de INSERT/UPDATE habilitadas.`);
                 if (overlay) overlay.classList.add('hidden');
             }
         });
