@@ -4,10 +4,10 @@ export function renderizarAutenticacao() {
     const app = document.getElementById('app');
 
     const html = `
-        <div class="min-h-screen flex flex-col justify-center items-center p-6 relative overflow-hidden bg-fundo">
+        <div class="min-h-screen flex flex-col justify-center items-center p-6 relative overflow-hidden bg-fundo z-0">
             
-            <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full mix-blend-screen filter blur-[150px] opacity-20 pointer-events-none"></div>
-            <div class="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full mix-blend-screen filter blur-[150px] opacity-30 pointer-events-none"></div>
+            <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[100px] opacity-20 pointer-events-none -z-10 transform-gpu"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full filter blur-[120px] opacity-25 pointer-events-none -z-10 transform-gpu"></div>
 
             <div class="relative w-full max-w-[400px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 sm:p-10 shadow-2xl z-10 flex flex-col items-center transform transition-all duration-500">
 
@@ -61,7 +61,7 @@ export function renderizarAutenticacao() {
                 </form>
 
                 <div id="msg-erro" class="mt-4 text-red-400 text-sm hidden font-medium text-center bg-red-500/10 py-3 px-4 rounded-xl w-full border border-red-500/20 backdrop-blur-md flex items-center justify-center gap-2">
-                    <i class="ph-fill ph-warning-circle text-lg"></i>
+                    <i class="ph-fill ph-warning-circle text-lg flex-shrink-0"></i>
                     <span id="txt-erro">Usuário ou senha inválidos.</span>
                 </div>
 
@@ -111,11 +111,9 @@ export function renderizarAutenticacao() {
 
         msgErro.classList.add('hidden');
 
-        // CHAMADA REAL AO BACKEND
         const { user, error } = await loginUsuario(usuario, senha);
 
         if (user && !error) {
-            
             if (lembrar) {
                 localStorage.setItem('atalaia_user_saved', usuario);
             } else {
@@ -152,6 +150,3 @@ export function renderizarAutenticacao() {
         }
     });
 }
-
-// Inicializa a tela de login na primeira abertura
-renderizarAutenticacao();
