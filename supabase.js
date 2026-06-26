@@ -1,21 +1,42 @@
 /**
  * BANDA ATALAIA APP - Core de Persistência, Autenticação e Storage
- * Arquitetura: Vanilla JS + ES Modules (Dynamic)
+ * Arquitetura: Vanilla JS + ES Modules (Robust Load)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// -------------------------------------------------------------------------
-// 1. CONFIGURAÇÕES DE CONEXÃO
-// -------------------------------------------------------------------------
 const SUPABASE_URL = 'https://tawjxujmihcenrmhzqmw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhd2p4dWptaWhjZW5ybWh6cW13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMDc5MzksImV4cCI6MjA5NzY4MzkzOX0.kssIjs_TJNtcIEH5G61_aZIvc9eDBR_iNDs8fYmPbAA';
 
-if (SUPABASE_URL.includes('https://tawjxujmihcenrmhzqmw.supabase.co')) {
-    console.warn("⚠️ Atenção: Configurar as credenciais reais no 'supabase.js'.");
+let supabaseInstance;
+
+try {
+    // Tenta inicializar. Se a URL estiver no formato errado, ele não vai dar Tela Preta.
+    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (error) {
+    console.error("Erro Fatal na Configuração do Supabase:", error);
+    // Cria um espelho vazio para impedir a tela preta e avisar na interface de login
+    supabaseInstance = {
+        auth: {
+            signInWithPassword: async () => ({ error: { message: "As credenciais do Supabase não foram configuradas." } }),
+            signOut: async () => ({ error: null }),
+            getUser: async () => ({ data: { user: null } }),
+            updateUser: async () => ({ error: { message: "Supabase Offline" } })
+        },
+        from: () => ({
+            select: () => ({ eq: () => ({ single: async () => ({ error: { message: "Offline" } }) }) }),
+            update: () => ({ eq: async () => ({ error: { message: "Offline" } }) })
+        }),
+        storage: {
+            from: () => ({
+                upload: async () => ({ error: { message: "Offline" } }),
+                getPublicUrl: () => ({ data: { publicUrl: "" } })
+            })
+        }
+    };
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = supabaseInstance;
 
 export async function loginUsuario(email, senha) {
     try {
@@ -41,10 +62,7 @@ export async function obterPerfilMembro(userId) {
     try {
         const { data, error } = await supabase.from('perfis').select('nome, foto_url, funcoes').eq('id', userId).single();
         if (error) throw error;
-        return {
-            perfil: { nome: data.nome, fotoUrl: data.foto_url, funcoes: data.funcoes || [] },
-            error: null
-        };
+        return { perfil: { nome: data.nome, fotoUrl: data.foto_url, funcoes: data.funcoes || [] }, error: null };
     } catch (error) {
         return { perfil: null, error };
     }
