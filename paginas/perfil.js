@@ -1,32 +1,18 @@
-import { renderizarInicio } from './inicio.js';
-import { renderizarAutenticacao } from './autenticacao.js';
-import { 
-    obterUsuarioAtual, 
-    obterPerfilMembro, 
-    atualizarPerfilMembro, 
-    atualizarSenhaUsuario, 
-    uploadFotoPerfil,
-    logoutUsuario
-} from '../supabase.js';
+import { obterUsuarioAtual, obterPerfilMembro, atualizarPerfilMembro, atualizarSenhaUsuario, uploadFotoPerfil, logoutUsuario } from '../supabase.js';
 
 export async function renderizarPerfil() {
     const app = document.getElementById('app');
 
-    // 1. Validação inicial e injeção do estado síncrono com o Supabase
     const usuarioAuth = await obterUsuarioAtual();
     if (!usuarioAuth) {
-        renderizarAutenticacao();
+        // IMPORTAÇÃO DINÂMICA
+        const modulo = await import('./autenticacao.js');
+        modulo.renderizarAutenticacao();
         return;
     }
 
-    let usuario = {
-        id: usuarioAuth.id,
-        nome: "Carregando...",
-        fotoUrl: "",
-        funcoes: []
-    };
+    let usuario = { id: usuarioAuth.id, nome: "Carregando...", fotoUrl: "", funcoes: [] };
 
-    // Carrega os dados reais salvos no banco PostgreSQL do Supabase
     const { perfil } = await obterPerfilMembro(usuario.id);
     if (perfil) {
         usuario.nome = perfil.nome;
@@ -35,14 +21,10 @@ export async function renderizarPerfil() {
     }
 
     const funcoesDisponiveis = [
-        { nome: 'Líder', icone: 'ph-fill ph-crown' },
-        { nome: 'Vice Líder', icone: 'ph-fill ph-star' },
-        { nome: 'Vocalista', icone: 'ph-fill ph-microphone-stage' },
-        { nome: 'Guitarrista', icone: 'ph-fill ph-guitar' },
-        { nome: 'Contrabaixista', icone: 'ph-fill ph-music-notes-plus' },
-        { nome: 'Baterista', icone: 'ph-fill ph-drum' },
-        { nome: 'Tecladista', icone: 'ph-fill ph-piano' },
-        { nome: 'Diretor Musical', icone: 'ph-fill ph-sliders' }
+        { nome: 'Líder', icone: 'ph-fill ph-crown' }, { nome: 'Vice Líder', icone: 'ph-fill ph-star' },
+        { nome: 'Vocalista', icone: 'ph-fill ph-microphone-stage' }, { nome: 'Guitarrista', icone: 'ph-fill ph-guitar' },
+        { nome: 'Contrabaixista', icone: 'ph-fill ph-music-notes-plus' }, { nome: 'Baterista', icone: 'ph-fill ph-drum' },
+        { nome: 'Tecladista', icone: 'ph-fill ph-piano' }, { nome: 'Diretor Musical', icone: 'ph-fill ph-sliders' }
     ];
 
     let menuFotoAberto = false;
@@ -50,7 +32,6 @@ export async function renderizarPerfil() {
     function exibirTelaPrincipal() {
         app.innerHTML = `
             <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
-                
                 <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full mix-blend-screen filter blur-[150px] opacity-15 pointer-events-none z-0"></div>
                 <div class="fixed bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-ouro-escuro rounded-full mix-blend-screen filter blur-[150px] opacity-15 pointer-events-none z-0"></div>
 
@@ -59,64 +40,43 @@ export async function renderizarPerfil() {
                         <i class="ph ph-arrow-left text-xl text-texto"></i>
                     </button>
                     <span class="text-sm font-bold text-ouro tracking-widest uppercase">Perfil do Membro</span>
-                    <button id="btn-logout" class="w-10 h-10 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/10 flex items-center justify-center transition-all outline-none" title="Sair do Aplicativo">
+                    <button id="btn-logout" class="w-10 h-10 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/10 flex items-center justify-center transition-all outline-none">
                         <i class="ph ph-sign-out text-xl text-red-400"></i>
                     </button>
                 </header>
 
                 <div class="w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-[2rem] flex flex-col items-center shadow-2xl relative z-10">
-                    
                     <div class="relative mb-6">
                         <div class="w-28 h-28 rounded-full border-2 border-ouro p-1 bg-black/40 flex items-center justify-center overflow-hidden shadow-[0_0_25px_rgba(242,183,5,0.2)] relative">
-                            ${usuario.fotoUrl 
-                                ? `<img src="${usuario.fotoUrl}" alt="Foto de Perfil" class="w-full h-full object-cover rounded-full">`
-                                : `<i class="ph-fill ph-user text-5xl text-ouro-claro"></i>`
-                            }
+                            ${usuario.fotoUrl ? `<img src="${usuario.fotoUrl}" class="w-full h-full object-cover rounded-full">` : `<i class="ph-fill ph-user text-5xl text-ouro-claro"></i>`}
                             <div id="overlay-loading-foto" class="hidden absolute inset-0 bg-black/70 rounded-full flex items-center justify-center backdrop-blur-sm transition-all">
                                 <i class="ph ph-spinner-gap text-2xl text-ouro animate-spin"></i>
                             </div>
                         </div>
-                        
                         <button id="btn-menu-foto" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-ouro hover:bg-ouro-brilhante text-fundo flex items-center justify-center shadow-lg border border-fundo transition-all outline-none active:scale-95">
                             <i class="ph-fill ph-camera text-base"></i>
                         </button>
-
                         <div id="dropdown-foto" class="${menuFotoAberto ? 'flex' : 'hidden'} absolute top-full right-0 mt-2 w-48 bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl flex-col p-2 shadow-2xl z-50 animate-[fadeIn_0.2s_ease-in-out]">
-                            <input type="file" id="input-upload-foto" accept="image/png, image/jpeg, image/webp" class="hidden" />
-                            <button id="opt-importar-foto" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-left text-texto hover:bg-white/5 transition-colors outline-none">
-                                <i class="ph ph-upload-simple text-base text-ouro"></i> Nova Foto (Galeria)
-                            </button>
-                            <button id="opt-remover-foto" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-left text-red-400 hover:bg-red-500/10 transition-colors outline-none">
-                                <i class="ph ph-trash text-base"></i> Remover Foto
-                            </button>
+                            <input type="file" id="input-upload-foto" accept="image/*" class="hidden" />
+                            <button id="opt-importar-foto" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-left text-texto hover:bg-white/5 transition-colors outline-none"><i class="ph ph-upload-simple text-base text-ouro"></i> Nova Foto</button>
+                            <button id="opt-remover-foto" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-left text-red-400 hover:bg-red-500/10 transition-colors outline-none"><i class="ph ph-trash text-base"></i> Remover Foto</button>
                         </div>
                     </div>
 
                     <h2 class="text-2xl font-bold text-texto text-center tracking-wide mb-1">${usuario.nome}</h2>
-                    <span class="text-[11px] text-ouro-claro font-bold tracking-widest uppercase bg-ouro-escuro/30 px-4 py-1 rounded-full border border-ouro-escuro/40 mb-8">
-                        Banda Atalaia
-                    </span>
+                    <span class="text-[11px] text-ouro-claro font-bold tracking-widest uppercase bg-ouro-escuro/30 px-4 py-1 rounded-full border border-ouro-escuro/40 mb-8">Banda Atalaia</span>
 
                     <div class="w-full border-t border-white/5 pt-6 mb-8">
                         <h3 class="text-xs font-bold text-texto/40 uppercase tracking-widest mb-4">Funções e Ministérios</h3>
                         <div class="grid grid-cols-2 gap-3">
                             ${funcoesDisponiveis.map(f => {
                                 if (!usuario.funcoes.includes(f.nome)) return ''; 
-                                return `
-                                    <div class="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-3 rounded-xl shadow-inner">
-                                        <div class="w-8 h-8 rounded-lg bg-ouro/10 flex items-center justify-center border border-ouro/20">
-                                            <i class="${f.icone} text-base text-ouro"></i>
-                                        </div>
-                                        <span class="text-xs font-medium text-texto/80 tracking-wide">${f.nome}</span>
-                                    </div>
-                                `;
+                                return `<div class="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-3 rounded-xl shadow-inner"><div class="w-8 h-8 rounded-lg bg-ouro/10 flex items-center justify-center border border-ouro/20"><i class="${f.icone} text-base text-ouro"></i></div><span class="text-xs font-medium text-texto/80 tracking-wide">${f.nome}</span></div>`;
                             }).join('')}
                         </div>
                     </div>
 
-                    <button id="btn-abrir-edicao" class="w-full bg-ouro hover:bg-ouro-brilhante text-fundo font-bold text-sm tracking-widest uppercase py-4 rounded-xl transition-all shadow-[0_4px_20px_rgba(242,183,5,0.2)] active:scale-[0.98] outline-none">
-                        Editar Perfil
-                    </button>
+                    <button id="btn-abrir-edicao" class="w-full bg-ouro hover:bg-ouro-brilhante text-fundo font-bold text-sm tracking-widest uppercase py-4 rounded-xl transition-all shadow-[0_4px_20px_rgba(242,183,5,0.2)] active:scale-[0.98] outline-none">Editar Perfil</button>
                 </div>
             </div>
         `;
@@ -144,7 +104,7 @@ export async function renderizarPerfil() {
                     </div>
 
                     <div class="flex flex-col gap-2 mb-6">
-                        <label class="text-xs font-bold text-texto/40 uppercase tracking-widest">Nova Senha (Mudar se preenchido)</label>
+                        <label class="text-xs font-bold text-texto/40 uppercase tracking-widest">Nova Senha</label>
                         <div class="relative flex items-center">
                             <i class="ph ph-lock absolute left-4 text-lg text-texto/40"></i>
                             <input type="password" id="input-senha" placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-texto focus:border-ouro/50 outline-none transition-all">
@@ -156,17 +116,7 @@ export async function renderizarPerfil() {
                         <div class="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
                             ${funcoesDisponiveis.map(f => {
                                 const marcado = usuario.funcoes.includes(f.nome) ? 'checked' : '';
-                                return `
-                                    <label class="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5 cursor-pointer hover:bg-white/[0.02] transition-colors">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
-                                                <i class="${f.icone} text-base text-ouro-claro"></i>
-                                            </div>
-                                            <span class="text-xs font-medium text-texto">${f.nome}</span>
-                                        </div>
-                                        <input type="checkbox" value="${f.nome}" ${marcado} class="w-4 h-4 rounded accent-ouro cursor-pointer input-funcao-check">
-                                    </label>
-                                `;
+                                return `<label class="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5 cursor-pointer hover:bg-white/[0.02] transition-colors"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10"><i class="${f.icone} text-base text-ouro-claro"></i></div><span class="text-xs font-medium text-texto">${f.nome}</span></div><input type="checkbox" value="${f.nome}" ${marcado} class="w-4 h-4 rounded accent-ouro cursor-pointer input-funcao-check"></label>`;
                             }).join('')}
                         </div>
                     </div>
@@ -177,14 +127,16 @@ export async function renderizarPerfil() {
     }
 
     function configurarEventosPrincipais() {
-        document.getElementById('btn-voltar-inicio').addEventListener('click', () => {
-            renderizarInicio();
+        document.getElementById('btn-voltar-inicio').addEventListener('click', async () => {
+            const modulo = await import('./inicio.js');
+            modulo.renderizarInicio();
         });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
             if (confirm("Deseja encerrar sua sessão?")) {
                 await logoutUsuario();
-                renderizarAutenticacao();
+                const modulo = await import('./autenticacao.js');
+                modulo.renderizarAutenticacao();
             }
         });
 
@@ -206,97 +158,63 @@ export async function renderizarPerfil() {
             }
         });
 
-        document.getElementById('opt-importar-foto').addEventListener('click', () => {
-            inputUploadFoto.click();
-        });
+        document.getElementById('opt-importar-foto').addEventListener('click', () => inputUploadFoto.click());
 
-        // CONEXÃO REAL DE UPLOAD COM STORAGE DO SUPABASE
         inputUploadFoto.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            if (file.size > 5 * 1024 * 1024) {
-                alert("A imagem excede o limite estável de 5MB.");
-                return;
-            }
-
             const overlay = document.getElementById('overlay-loading-foto');
             if (overlay) overlay.classList.remove('hidden');
 
-            // 1. Envia o arquivo físico para o bucket 'avatars' configurado no painel
             const { url, error } = await uploadFotoPerfil(usuario.id, file);
 
             if (url && !error) {
                 usuario.fotoUrl = url;
-                // 2. Atualiza a referência da URL da imagem na tabela relacional de Perfis
-                await atualizarPerfilMembro(usuario.id, {
-                    nome: usuario.nome,
-                    fotoUrl: usuario.fotoUrl,
-                    funcoes: usuario.funcoes
-                });
-                renderizarPerfil(); // Recarrega o módulo com o estado atualizado da nuvem
+                await atualizarPerfilMembro(usuario.id, { nome: usuario.nome, fotoUrl: usuario.fotoUrl, funcoes: usuario.funcoes });
+                renderizarPerfil(); 
             } else {
-                alert("Erro ao sincronizar foto de perfil com o servidor.");
+                alert("Erro ao enviar foto. Verifique a configuração do Supabase.");
                 if (overlay) overlay.classList.add('hidden');
             }
         });
 
         document.getElementById('opt-remover-foto').addEventListener('click', async () => {
-            if (confirm("Remover foto de perfil definitivamente?")) {
+            if (confirm("Remover foto de perfil?")) {
                 usuario.fotoUrl = "";
-                await atualizarPerfilMembro(usuario.id, {
-                    nome: usuario.nome,
-                    fotoUrl: "",
-                    funcoes: usuario.funcoes
-                });
+                await atualizarPerfilMembro(usuario.id, { nome: usuario.nome, fotoUrl: "", funcoes: usuario.funcoes });
                 renderizarPerfil();
             }
         });
 
-        document.getElementById('btn-abrir-edicao').addEventListener('click', () => {
-            exibirTelaEdicao();
-        });
+        document.getElementById('btn-abrir-edicao').addEventListener('click', () => exibirTelaEdicao());
     }
 
     function configurarEventosEdicao() {
-        document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
-            exibirTelaPrincipal();
-        });
+        document.getElementById('btn-cancelar-edicao').addEventListener('click', () => exibirTelaPrincipal());
 
-        // CONEXÃO REAL DE SALVAMENTO DE TEXTOS E FUNÇÕES
         document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
             const novoNome = document.getElementById('input-nome').value.trim();
             const novaSenha = document.getElementById('input-senha').value.trim();
             
-            if (!novoNome) {
-                alert("O campo Nome é obrigatório.");
-                return;
-            }
+            if (!novoNome) return alert("O campo Nome é obrigatório.");
 
             const checkboxes = document.querySelectorAll('.input-funcao-check:checked');
             const novasFuncoes = Array.from(checkboxes).map(cb => cb.value);
 
-            // 1. Se o usuário alterou a senha, faz o update na tabela Auth nativa
             if (novaSenha) {
-                if (novaSenha.length < 6) {
-                    alert("A senha precisa ter no mínimo 6 dígitos.");
-                    return;
-                }
+                if (novaSenha.length < 6) return alert("A senha precisa ter no mínimo 6 dígitos.");
                 await atualizarSenhaUsuario(novaSenha);
             }
 
-            // 2. Atualiza a tabela customizada 'perfis' no PostgreSQL
             const { sucesso } = await atualizarPerfilMembro(usuario.id, {
                 nome: novoNome,
                 fotoUrl: usuario.fotoUrl,
                 funcoes: novasFuncoes
             });
 
-            if (sucesso) {
-                renderizarPerfil(); // Reseta e atualiza a view principal do perfil
-            } else {
-                alert("Ocorreu um erro ao salvar os dados.");
-            }
+            if (sucesso) renderizarPerfil();
+            else alert("Erro ao salvar os dados.");
         });
     }
 
@@ -309,9 +227,6 @@ export async function renderizarPerfil() {
             input { -webkit-user-select: text; user-select: text; }
             button, a, i, div, label { -webkit-tap-highlight-color: transparent; }
             html, body, #app { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
-            ::-webkit-scrollbar { width: 4px; }
-            ::-webkit-scrollbar-track { background: transparent; }
-            ::-webkit-scrollbar-thumb { background: rgba(252, 183, 5, 0.2); border-radius: 99px; }
         `;
         document.head.appendChild(style);
     }
