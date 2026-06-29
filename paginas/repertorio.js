@@ -50,6 +50,13 @@ export function inicializarEventosAba() {
         document.head.appendChild(style);
     }
 
+    // Recebe e processa comandos de roteamento vindos da aba de Agenda
+    if (window.RepertorioMusicaId) {
+        estadoRepertorio.cancaoSelecionadaId = window.RepertorioMusicaId;
+        estadoRepertorio.abaAtiva = 'detalhes-cancao';
+        window.RepertorioMusicaId = null; // Limpa para evitar loops
+    }
+
     // Controle global robusto para fechar o menu de filtros ao clicar fora
     if (!listenerGlobalAdicionado) {
         document.addEventListener('click', (e) => {
@@ -432,13 +439,11 @@ function renderizarTelaEdicao() {
 function obterMusicasFiltradas() {
     let lista = [...musicasCadastradas];
 
-    // Aplicar Busca por texto
     if (estadoRepertorio.termoBusca) {
         const termo = estadoRepertorio.termoBusca.toLowerCase();
         lista = lista.filter(m => m.titulo.toLowerCase().includes(termo) || m.artista.toLowerCase().includes(termo));
     }
 
-    // Aplicar Filtros Avançados
     if (estadoRepertorio.filtroEstilo) {
         lista = lista.filter(m => m.estilo === estadoRepertorio.filtroEstilo);
     }
@@ -446,7 +451,6 @@ function obterMusicasFiltradas() {
         lista = lista.filter(m => m.tom === estadoRepertorio.filtroTom);
     }
 
-    // Aplicar Ordenação
     if (estadoRepertorio.filtro === 'az') {
         lista.sort((a, b) => a.titulo.localeCompare(b.titulo));
     } else if (estadoRepertorio.filtro === 'za') {
@@ -540,7 +544,6 @@ function configurarEventosPrincipal() {
         renderizarInterface();
     });
 
-    // Campo de Busca Reativo
     const inputBusca = document.getElementById('busca-musica');
     inputBusca.addEventListener('input', (e) => {
         estadoRepertorio.termoBusca = e.target.value;
@@ -552,7 +555,6 @@ function configurarEventosPrincipal() {
         }
     });
 
-    // Menu Dropdown de Filtros (Abre/Fecha)
     const btnFiltro = document.getElementById('btn-filtro');
     btnFiltro.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -560,16 +562,14 @@ function configurarEventosPrincipal() {
         renderizarInterface();
     });
 
-    // Aplicar Ordenação
     document.querySelectorAll('[data-filtro]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             estadoRepertorio.filtro = e.currentTarget.getAttribute('data-filtro');
-            estadoRepertorio.menuFiltroAberto = true; // Mantém o dropdown aberto
+            estadoRepertorio.menuFiltroAberto = true;
             renderizarInterface();
         });
     });
 
-    // Aplicar Filtros Avançados
     const selectEstilo = document.getElementById('filtro-estilo');
     if (selectEstilo) {
         selectEstilo.addEventListener('change', (e) => {
@@ -588,7 +588,6 @@ function configurarEventosPrincipal() {
         });
     }
 
-    // Clicar no Artista para ver suas canções
     document.querySelectorAll('.cartao-artista').forEach(cartao => {
         cartao.addEventListener('click', (e) => {
             estadoRepertorio.artistaSelecionado = e.currentTarget.getAttribute('data-artista');
@@ -597,7 +596,6 @@ function configurarEventosPrincipal() {
         });
     });
 
-    // Clicar na Canção para Visualizar Detalhes Completos
     document.querySelectorAll('.cartao-musica').forEach(cartao => {
         cartao.addEventListener('click', (e) => {
             estadoRepertorio.cancaoSelecionadaId = parseInt(e.currentTarget.getAttribute('data-id'), 10);
@@ -606,7 +604,6 @@ function configurarEventosPrincipal() {
         });
     });
 
-    // Abrir Form de Cadastro (FAB)
     document.getElementById('btn-nova-cancao').addEventListener('click', () => {
         estadoRepertorio.abaAtiva = 'cadastro';
         renderizarInterface();
@@ -620,7 +617,6 @@ function configurarEventosDetalhesArtista() {
         renderizarInterface();
     });
 
-    // Vincular clique nas músicas da lista do artista
     document.querySelectorAll('.cartao-musica').forEach(cartao => {
         cartao.addEventListener('click', (e) => {
             estadoRepertorio.cancaoSelecionadaId = parseInt(e.currentTarget.getAttribute('data-id'), 10);
@@ -632,7 +628,16 @@ function configurarEventosDetalhesArtista() {
 
 function configurarEventosDetalhesCancao() {
     document.getElementById('btn-voltar-detalhes').addEventListener('click', () => {
-        // Se veio filtrado por artista, retorna para o artista, senão para a lista de canções
+        // Se a requisição de visualizar música veio da página de Agenda, retorna para Agenda
+        if (window.RepertorioOrigem === 'agenda') {
+            window.RepertorioOrigem = null;
+            const btnAbaAgenda = document.querySelector('button[data-aba="agenda"]');
+            if (btnAbaAgenda) {
+                btnAbaAgenda.click();
+                return;
+            }
+        }
+
         if (estadoRepertorio.artistaSelecionado) {
             estadoRepertorio.abaAtiva = 'detalhes-artista';
         } else {
@@ -641,13 +646,11 @@ function configurarEventosDetalhesCancao() {
         renderizarInterface();
     });
 
-    // Ativar Edição
     document.getElementById('btn-editar-cancao').addEventListener('click', () => {
         estadoRepertorio.abaAtiva = 'edicao';
         renderizarInterface();
     });
 
-    // Ativar Exclusão
     document.getElementById('btn-deletar-cancao').addEventListener('click', () => {
         if (confirm("Tem certeza de que deseja excluir permanentemente esta canção do repertório?")) {
             musicasCadastradas = musicasCadastradas.filter(m => m.id !== estadoRepertorio.cancaoSelecionadaId);
