@@ -18,6 +18,7 @@ let estadoAgenda = {
             horaInicio: '18:00',
             horaFim: '20:30',
             local: 'Nave Central da Igreja',
+            informacoes: 'Traje: Camiseta oficial preta. Por favor, chegar com 30 minutos de antecedência para passagem de som rápida.',
             repertorio: [
                 { id: 1, titulo: 'Bondade de Deus', artista: 'Isaías Saad', tom: 'G', estilo: 'Worship' },
                 { id: 2, titulo: 'A Casa É Sua', artista: 'Casa Worship', tom: 'E', estilo: 'Worship' }
@@ -39,6 +40,7 @@ let estadoAgenda = {
             horaInicio: '19:30',
             horaFim: '',
             local: 'Galeria do Som (Templo)',
+            informacoes: 'Focaremos na nova música do congresso. Tragam suas garrafas de água.',
             repertorio: [
                 { id: 3, titulo: 'Muro de Fogo', artista: 'Preto no Branco', tom: 'Am', estilo: 'Corinho de Fogo' }
             ],
@@ -55,6 +57,7 @@ let estadoAgenda = {
             horaInicio: '19:00',
             horaFim: '22:00',
             local: 'Igreja Sede',
+            informacoes: '',
             repertorio: [],
             confirmados: [],
             ausentes: []
@@ -67,6 +70,7 @@ let estadoAgenda = {
             horaInicio: '20:00',
             horaFim: '21:00',
             local: 'Sala de Reuniões',
+            informacoes: 'Reunião rápida para definir escalas do próximo mês.',
             repertorio: [],
             confirmados: [
                 { id: 'user1', nome: 'Você', foto: '' }
@@ -89,7 +93,8 @@ export function obterTemplateAba() {
         const style = document.createElement('style');
         style.id = 'estilos-agenda';
         style.innerHTML = `
-            @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+            /* O 'transform: none' no 100% resolve o bug do position: fixed do botão flutuante */
+            @keyframes fadeIn { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: none; } }
             .animate-fadeIn { animation: fadeIn 0.4s ease-in-out forwards; }
             .avatar-stack { display: flex; align-items: center; margin-left: 8px; }
             .avatar-item { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #0D0D0D; margin-left: -8px; background-color: #1a1a1a; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -163,7 +168,7 @@ function renderizarCardAgenda(agenda) {
     const isAusente = agenda.ausentes.some(u => u.id === estadoAgenda.usuarioAtual.id);
 
     return `
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 backdrop-blur-md shadow-xl relative overflow-hidden transition-all">
+        <div id="agenda-card-${agenda.id}" class="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 backdrop-blur-md shadow-xl relative overflow-hidden transition-all">
             <div class="absolute left-0 top-0 h-full w-1 ${config.corBg.replace('/20', '')}"></div>
             
             <div class="flex justify-between items-start">
@@ -190,6 +195,13 @@ function renderizarCardAgenda(agenda) {
                 </p>
             </div>
 
+            ${agenda.informacoes ? `
+                <div class="bg-black/20 border border-white/5 rounded-xl p-3 flex flex-col gap-1 mt-1">
+                    <span class="text-[10px] text-ouro/70 font-bold uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-info"></i> Informações</span>
+                    <p class="text-xs text-texto/80 leading-relaxed">${agenda.informacoes}</p>
+                </div>
+            ` : ''}
+
             <div class="flex flex-col gap-2 border-t border-white/5 pt-3">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -202,7 +214,7 @@ function renderizarCardAgenda(agenda) {
                 ${agenda.ausentes.length > 0 ? `
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] text-red-400/60 font-bold uppercase tracking-widest">Não Confirmados (${agenda.ausentes.length})</span>
+                        <span class="text-[10px] text-red-400/60 font-bold uppercase tracking-widest">Ausentes (${agenda.ausentes.length})</span>
                         <div class="avatar-stack">
                             ${gerarAvatares(agenda.ausentes)}
                         </div>
@@ -220,21 +232,20 @@ function renderizarCardAgenda(agenda) {
                 </div>
             ` : ''}
 
-            <div class="flex gap-2 mt-2 pt-4 border-t border-white/5">
-                <button class="btn-presenca flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all outline-none flex items-center justify-center gap-1.5 ${isConfirmado ? 'bg-ouro text-fundo shadow-[0_0_15px_rgba(242,183,5,0.3)]' : 'bg-white/5 border border-white/10 text-texto/60 hover:text-ouro'}" data-acao="confirmar" data-id="${agenda.id}">
-                    <i class="ph-fill ${isConfirmado ? 'ph-check-circle' : 'ph-check'} text-lg"></i> Confirmar
+            <div class="flex gap-2 mt-2 pt-3 border-t border-white/5">
+                <button class="btn-presenca flex-1 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all outline-none flex items-center justify-center gap-1.5 ${isConfirmado ? 'bg-green-500/20 text-green-400 border border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'bg-white/5 border border-white/10 text-texto/60 hover:text-green-400'}" data-acao="confirmar" data-id="${agenda.id}">
+                    <i class="ph-fill ${isConfirmado ? 'ph-check-circle' : 'ph-check'} text-base"></i> ${isConfirmado ? 'Confirmado' : 'Confirmar'}
                 </button>
-                <button class="btn-presenca flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all outline-none flex items-center justify-center gap-1.5 ${isAusente ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-white/5 border border-white/10 text-texto/60 hover:text-red-400'}" data-acao="ausente" data-id="${agenda.id}">
-                    <i class="ph-fill ${isAusente ? 'ph-x-circle' : 'ph-x'} text-lg"></i> Ausente
+                <button class="btn-presenca flex-1 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all outline-none flex items-center justify-center gap-1.5 ${isAusente ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-white/5 border border-white/10 text-texto/60 hover:text-red-400'}" data-acao="ausente" data-id="${agenda.id}">
+                    <i class="ph-fill ${isAusente ? 'ph-x-circle' : 'ph-x'} text-base"></i> ${isAusente ? 'Ausente' : 'Marcar Ausência'}
                 </button>
             </div>
         </div>
     `;
 }
 
-// Mini Card para o Repertório (mesmo design do repertorio.js)
+// Mini Card para o Repertório
 function renderizarMiniCardMusica(musica) {
-    // Determinar badge do estilo musical
     let coresEstilo = 'bg-white/5 text-texto/60 border-white/10';
     switch (musica.estilo) {
         case 'Worship': coresEstilo = 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'; break;
@@ -243,7 +254,7 @@ function renderizarMiniCardMusica(musica) {
     }
 
     return `
-        <div class="bg-white/5 border border-white/10 rounded-lg p-2.5 flex items-center gap-3 backdrop-blur-sm">
+        <div data-musica-id="${musica.id}" class="mini-card-musica cursor-pointer hover:bg-white/10 border border-white/10 rounded-lg p-2.5 flex items-center gap-3 backdrop-blur-sm transition-all active:scale-[0.98]">
             <div class="w-8 h-8 rounded-lg bg-ouro/10 border border-ouro/20 flex items-center justify-center font-bold text-ouro text-xs shadow-inner shrink-0">${musica.tom || '-'}</div>
             <div class="flex flex-col overflow-hidden w-full">
                 <h4 class="text-xs font-bold text-texto leading-tight truncate">${musica.titulo}</h4>
@@ -253,6 +264,7 @@ function renderizarMiniCardMusica(musica) {
                     <span class="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded border ${coresEstilo}">${musica.estilo || 'Geral'}</span>
                 </div>
             </div>
+            <i class="ph ph-caret-right text-texto/30 mr-1"></i>
         </div>
     `;
 }
@@ -267,43 +279,40 @@ function gerarDiasCalendarioHTML() {
     
     let html = '';
     
-    // Dias vazios antes do início do mês
     for (let i = 0; i < diaSemanaInicio; i++) {
         html += `<div class="p-2"></div>`;
     }
     
-    // Dias do mês
     for (let dia = 1; dia <= diasNoMes; dia++) {
         const dataFormatadaStr = `${estadoAgenda.anoAtual}-${String(estadoAgenda.mesAtual + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
         
-        // Verifica se é o dia de hoje real
         const hojeReal = new Date();
         const isHoje = hojeReal.getDate() === dia && hojeReal.getMonth() === estadoAgenda.mesAtual && hojeReal.getFullYear() === estadoAgenda.anoAtual;
         
-        // Verifica se há alguma agenda neste dia
         const agendasNoDia = estadoAgenda.agendas.filter(a => a.dataStr === dataFormatadaStr);
         const temAgenda = agendasNoDia.length > 0;
         
-        let classesBg = 'bg-transparent text-texto/80 hover:bg-white/10';
+        let classesBg = 'bg-transparent text-texto/80 hover:bg-white/10 cursor-default';
         let badgeIndicador = '';
+        let acaoClick = '';
 
-        if (isHoje) {
-            classesBg = 'bg-white/10 border border-white/20 text-texto font-bold shadow-inner';
-        }
-        
         if (temAgenda) {
-            // Pega a configuração da cor da primeira agenda do dia para o fundo do calendário
             const config = configTipos[agendasNoDia[0].tipo] || configTipos['Culto'];
-            classesBg = `${config.corBg} border ${config.corBorda} font-bold ${config.corTexto}`;
+            classesBg = `${config.corBg} border ${config.corBorda} font-bold ${config.corTexto} cursor-pointer hover:scale-105 z-10`;
+            acaoClick = `data-scroll-to="agenda-card-${agendasNoDia[0].id}"`;
             
-            // Se houver mais de um evento no mesmo dia, adiciona um pequeno ponto indicador
             if (agendasNoDia.length > 1) {
                 badgeIndicador = `<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#0D0D0D]"></div>`;
             }
         }
+
+        if (isHoje) {
+            // Destaca o dia de hoje fortemente com dourado e sombra
+            classesBg = `bg-ouro text-fundo font-extrabold shadow-[0_0_15px_rgba(242,183,5,0.6)] ${temAgenda ? 'cursor-pointer hover:scale-105 z-10' : 'cursor-default'}`;
+        }
         
         html += `
-            <div class="relative flex items-center justify-center w-full aspect-square rounded-xl cursor-default transition-all text-xs ${classesBg}">
+            <div ${acaoClick} class="relative flex items-center justify-center w-full aspect-square rounded-xl transition-all text-xs ${classesBg}">
                 ${dia}
                 ${badgeIndicador}
             </div>
@@ -313,7 +322,7 @@ function gerarDiasCalendarioHTML() {
     return html;
 }
 
-// Gerador de Avatares (Limitado a 4 para não quebrar o layout, mais um "+X")
+// Gerador de Avatares (Limitado a 4)
 function gerarAvatares(listaUsuarios) {
     const limite = 4;
     let html = '';
@@ -333,7 +342,6 @@ function gerarAvatares(listaUsuarios) {
     return html;
 }
 
-// Utilitário para Mês
 function obterNomeMes(indice) {
     const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     return meses[indice];
@@ -347,7 +355,7 @@ export function inicializarEventosAba() {
         window.agendaListenersInjetados = true;
         
         document.addEventListener('click', (e) => {
-            // Controle do Calendário
+            // Controle do Calendário (Passar meses)
             if (e.target.closest('#btn-mes-ant')) {
                 estadoAgenda.mesAtual--;
                 if (estadoAgenda.mesAtual < 0) {
@@ -367,6 +375,32 @@ export function inicializarEventosAba() {
                 return;
             }
 
+            // Rolar a tela até o evento clicado no calendário
+            const diaCalendario = e.target.closest('[data-scroll-to]');
+            if (diaCalendario) {
+                const targetId = diaCalendario.getAttribute('data-scroll-to');
+                const element = document.getElementById(targetId);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Efeito sutil de piscar para mostrar ao usuário onde a tela parou
+                    element.classList.add('ring-2', 'ring-ouro', 'ring-offset-2', 'ring-offset-[#0D0D0D]');
+                    setTimeout(() => element.classList.remove('ring-2', 'ring-ouro', 'ring-offset-2', 'ring-offset-[#0D0D0D]'), 1500);
+                }
+                return;
+            }
+
+            // Redirecionar para Detalhes da Canção (Integração com Repertório)
+            const cardMusica = e.target.closest('.mini-card-musica');
+            if (cardMusica) {
+                const idMusica = parseInt(cardMusica.getAttribute('data-musica-id'), 10);
+                window.RepertorioOrigem = 'agenda'; 
+                window.RepertorioMusicaId = idMusica;
+                // Dispara o clique na Tab Bar para trocar a aba ativa para repertório
+                const btnAbaRepertorio = document.querySelector('button[data-aba="repertorio"]');
+                if (btnAbaRepertorio) btnAbaRepertorio.click();
+                return;
+            }
+
             // Ações de Presença
             const btnPresenca = e.target.closest('.btn-presenca');
             if (btnPresenca) {
@@ -375,7 +409,6 @@ export function inicializarEventosAba() {
                 const agenda = estadoAgenda.agendas.find(a => a.id === idAgenda);
                 
                 if (agenda) {
-                    // Remove de ambas as listas para re-adicionar na correta
                     agenda.confirmados = agenda.confirmados.filter(u => u.id !== estadoAgenda.usuarioAtual.id);
                     agenda.ausentes = agenda.ausentes.filter(u => u.id !== estadoAgenda.usuarioAtual.id);
                     
@@ -390,16 +423,13 @@ export function inicializarEventosAba() {
                 return;
             }
             
-            // Botão Novo Compromisso (FAB) - Reservado para o futuro
             if (e.target.closest('#btn-nova-agenda')) {
-                // Futura implementação de abertura de formulário
                 alert('A tela de Cadastro de Nova Agenda será implementada aqui.');
             }
         });
     }
 }
 
-// Atualiza a tela injetando o novo HTML gerado reativamente
 function forcarAtualizacaoAgenda() {
     const container = document.getElementById('modulo-agenda');
     if (container) {
