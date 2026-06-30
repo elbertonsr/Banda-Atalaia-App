@@ -132,46 +132,50 @@ function obterBadgeEstilo(estilo) {
 // ==========================================
 
 function renderizarTelaPrincipal() {
-    return `
-        <div class="w-full max-w-xl flex flex-col gap-4 animate-fadeIn w-full relative h-full">
+return `
+        <div class="w-full max-w-xl relative h-full">
             
-            <div class="flex items-center gap-3 w-full">
-                <div class="relative flex-1">
-                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-texto/40 text-lg"></i>
-                    <input type="text" id="busca-musica" value="${estadoRepertorio.termoBusca}" placeholder="Buscar repertório..." class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-texto placeholder-texto/30 focus:outline-none focus:border-ouro transition-all">
-                </div>
-                <div class="relative">
-                    <button id="btn-filtro" class="w-12 h-12 rounded-xl border flex items-center justify-center transition-all outline-none ${estadoRepertorio.menuFiltroAberto || estadoRepertorio.filtroEstilo || estadoRepertorio.filtroTom ? 'bg-ouro/10 text-ouro border-ouro/30' : 'bg-white/5 border-white/10 text-ouro hover:bg-white/10'}">
-                        <i class="ph ph-sliders-horizontal text-xl"></i>
-                    </button>
-                    <div id="dropdown-filtro" class="${estadoRepertorio.menuFiltroAberto ? 'flex' : 'hidden'} absolute top-full right-0 mt-2 w-56 bg-black/95 backdrop-blur-xl border border-white/10 rounded-2xl flex-col p-3 shadow-2xl z-50">
-                        <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest px-2 pb-1">Ordenar por</span>
-                        <button data-filtro="az" class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-xs text-left ${estadoRepertorio.filtro === 'az' ? 'text-ouro bg-ouro/10' : 'text-texto hover:bg-white/5'} transition-colors outline-none mb-1"><i class="ph ph-sort-ascending text-lg"></i> Ordem (A-Z)</button>
-                        <button data-filtro="za" class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-xs text-left ${estadoRepertorio.filtro === 'za' ? 'text-ouro bg-ouro/10' : 'text-texto hover:bg-white/5'} transition-colors outline-none mb-1"><i class="ph ph-sort-descending text-lg"></i> Ordem (Z-A)</button>
-                        <button data-filtro="recente" class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-xs text-left ${estadoRepertorio.filtro === 'recente' ? 'text-ouro bg-ouro/10' : 'text-texto hover:bg-white/5'} transition-colors outline-none"><i class="ph ph-clock text-lg"></i> Mais Recentes</button>
-                        
-                        <div class="h-px w-full bg-white/10 my-3"></div>
-                        
-                        <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest px-2 pb-2">Filtrar por</span>
-                        <select id="filtro-estilo" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-texto outline-none mb-2 cursor-pointer transition-all focus:border-ouro/50">
-                            <option value="">Todos os Estilos</option>
-                            ${listaEstilosDisponiveis.map(e => `<option value="${e}" ${estadoRepertorio.filtroEstilo === e ? 'selected' : ''}>${e}</option>`).join('')}
-                        </select>
-                        <select id="filtro-tom" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-texto outline-none cursor-pointer transition-all focus:border-ouro/50">
-                            <option value="">Todos os Tons</option>
-                            ${listaTonsDisponiveis.map(t => `<option value="${t}" ${estadoRepertorio.filtroTom === t ? 'selected' : ''}>${t}</option>`).join('')}
-                        </select>
+            <div class="w-full flex flex-col gap-4 animate-fadeIn">
+                
+                <div class="flex items-center gap-3 w-full">
+                    <div class="relative flex-1">
+                        <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-texto/40 text-lg"></i>
+                        <input type="text" id="busca-musica" value="${estadoRepertorio.termoBusca}" placeholder="Buscar repertório..." class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-texto placeholder-texto/30 focus:outline-none focus:border-ouro transition-all">
+                    </div>
+                    <div class="relative">
+                        <button id="btn-filtro" class="w-12 h-12 rounded-xl border flex items-center justify-center transition-all outline-none ${estadoRepertorio.menuFiltroAberto || estadoRepertorio.filtroEstilo || estadoRepertorio.filtroTom ? 'bg-ouro/10 text-ouro border-ouro/30' : 'bg-white/5 border-white/10 text-ouro hover:bg-white/10'}">
+                            <i class="ph ph-sliders-horizontal text-xl"></i>
+                        </button>
+                        <div id="dropdown-filtro" class="${estadoRepertorio.menuFiltroAberto ? 'flex' : 'hidden'} absolute top-full right-0 mt-2 w-56 bg-black/95 backdrop-blur-xl border border-white/10 rounded-2xl flex-col p-3 shadow-2xl z-50">
+                            <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest px-2 pb-1">Ordenar por</span>
+                            <button data-filtro="az" class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-xs text-left ${estadoRepertorio.filtro === 'az' ? 'text-ouro bg-ouro/10' : 'text-texto hover:bg-white/5'} transition-colors outline-none mb-1"><i class="ph ph-sort-ascending text-lg"></i> Ordem (A-Z)</button>
+                            <button data-filtro="za" class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-xs text-left ${estadoRepertorio.filtro === 'za' ? 'text-ouro bg-ouro/10' : 'text-texto hover:bg-white/5'} transition-colors outline-none mb-1"><i class="ph ph-sort-descending text-lg"></i> Ordem (Z-A)</button>
+                            <button data-filtro="recente" class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-xs text-left ${estadoRepertorio.filtro === 'recente' ? 'text-ouro bg-ouro/10' : 'text-texto hover:bg-white/5'} transition-colors outline-none"><i class="ph ph-clock text-lg"></i> Mais Recentes</button>
+                            
+                            <div class="h-px w-full bg-white/10 my-3"></div>
+                            
+                            <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest px-2 pb-2">Filtrar por</span>
+                            <select id="filtro-estilo" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-texto outline-none mb-2 cursor-pointer transition-all focus:border-ouro/50">
+                                <option value="">Todos os Estilos</option>
+                                ${listaEstilosDisponiveis.map(e => `<option value="${e}" ${estadoRepertorio.filtroEstilo === e ? 'selected' : ''}>${e}</option>`).join('')}
+                            </select>
+                            <select id="filtro-tom" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-texto outline-none cursor-pointer transition-all focus:border-ouro/50">
+                                <option value="">Todos os Tons</option>
+                                ${listaTonsDisponiveis.map(t => `<option value="${t}" ${estadoRepertorio.filtroTom === t ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex p-1 bg-white/5 border border-white/10 rounded-xl mt-2">
-                <button id="tab-cancoes" class="flex-1 py-2 text-sm font-bold rounded-lg transition-all outline-none ${estadoRepertorio.abaAtiva === 'cancoes' ? 'bg-ouro text-fundo shadow-md' : 'text-texto/50 hover:text-texto'}">Canções</button>
-                <button id="tab-artistas" class="flex-1 py-2 text-sm font-bold rounded-lg transition-all outline-none ${estadoRepertorio.abaAtiva === 'artistas' ? 'bg-ouro text-fundo shadow-md' : 'text-texto/50 hover:text-texto'}">Artistas</button>
-            </div>
+                <div class="flex p-1 bg-white/5 border border-white/10 rounded-xl mt-2">
+                    <button id="tab-cancoes" class="flex-1 py-2 text-sm font-bold rounded-lg transition-all outline-none ${estadoRepertorio.abaAtiva === 'cancoes' ? 'bg-ouro text-fundo shadow-md' : 'text-texto/50 hover:text-texto'}">Canções</button>
+                    <button id="tab-artistas" class="flex-1 py-2 text-sm font-bold rounded-lg transition-all outline-none ${estadoRepertorio.abaAtiva === 'artistas' ? 'bg-ouro text-fundo shadow-md' : 'text-texto/50 hover:text-texto'}">Artistas</button>
+                </div>
 
-            <div class="flex flex-col gap-3 mt-2 pb-44 w-full">
-                ${estadoRepertorio.abaAtiva === 'cancoes' ? gerarListaCancoes() : gerarListaArtistas()}
+                <div class="flex flex-col gap-3 mt-2 pb-44 w-full">
+                    ${estadoRepertorio.abaAtiva === 'cancoes' ? gerarListaCancoes() : gerarListaArtistas()}
+                </div>
+
             </div>
 
             <button id="btn-nova-cancao" class="fixed bottom-28 right-6 w-14 h-14 bg-ouro hover:bg-ouro-brilhante rounded-full shadow-[0_4px_20px_rgba(242,183,5,0.4)] flex items-center justify-center text-fundo transition-transform hover:scale-105 active:scale-95 outline-none z-50">
