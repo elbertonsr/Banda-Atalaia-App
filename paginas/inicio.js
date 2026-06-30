@@ -1,7 +1,7 @@
 // BANDA ATALAIA APP - Módulo de Início (Dashboard)
 // Arquitetura Reativa Vanilla JS com Tailwind CSS e Glassmorphism
 
-import { obterUsuarioAtual, obterPerfilMembro } from '../supabase.js';
+import { obterUsuarioAtual, obterPerfilMembro, obterTodosPerfis } from '../supabase.js';
 
 export async function renderizarInicio(abaParaAtivar = 'inicio') {
     const app = document.getElementById('app');
@@ -24,6 +24,10 @@ export async function renderizarInicio(abaParaAtivar = 'inicio') {
     } else {
         usuarioLogado.nome = "Membro Atalaia";
     }
+
+    // BUSCA TODAS AS CONTAS REAIS CADASTRADAS NO SUPABASE
+    const { perfis } = await obterTodosPerfis();
+    const todosMembros = perfis || [];
     
     const abas = [
         { id: 'inicio', label: 'Início', iconePadrao: 'ph ph-house', iconeAtivo: 'ph-fill ph-house' },
@@ -191,36 +195,31 @@ export async function renderizarInicio(abaParaAtivar = 'inicio') {
     function obterTemplateDashboardInicio() {
         const devocional = obterDevocionalDaSemana();
         
-        // ================= DADOS MOCKADOS PARA EXIBIÇÃO (Refletindo os módulos) =================
-        // Último Aviso
         const ultimoAviso = {
             categoria: 'Geral', prioridade: 'Urgente', titulo: 'Alteração de Horário do Ensaio',
             descricao: 'Devido à manutenção preventiva do ar-condicionado da igreja, o ensaio deste sábado começará pontualmente às 14:00h e não às 16:00h. Contamos com a pontualidade de todos.',
             autorNome: 'Líder', dataPublicacao: new Date().toISOString()
         };
 
-        // Próxima Agenda
+        // Próxima Agenda: Agora extraindo os avatares reais cadastrados
         const hoje = new Date();
         const proximaAgenda = {
             tipo: 'Culto', titulo: 'Culto de Celebração',
             dataStr: `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-15`,
             horaInicio: '18:00', local: 'Nave Central da Igreja',
-            confirmados: [{ foto: 'https://i.pravatar.cc/150?u=sarah' }, { foto: 'https://i.pravatar.cc/150?u=david' }, { foto: '' }]
+            confirmados: todosMembros.slice(0, 3).map(m => ({ foto: m.fotoUrl }))
         };
 
-        // Últimas Canções Repertório
         const ultimasCancoes = [
             { titulo: 'Muro de Fogo', artista: 'Preto no Branco', tom: 'Am', estilo: 'Corinho de Fogo', data: '2023-10-01' },
             { titulo: 'A Casa É Sua', artista: 'Casa Worship', tom: 'E', estilo: 'Worship', data: '2023-09-15' }
         ];
 
-        // Membros Online
-        const membrosOnline = [
-            { nome: 'Você', foto: usuarioLogado.fotoUrl },
-            { nome: 'Sarah', foto: 'https://i.pravatar.cc/150?u=sarah' },
-            { nome: 'Arthur', foto: '' },
-            { nome: 'David', foto: 'https://i.pravatar.cc/150?u=david' }
-        ];
+        // Membros Online: Extrai nomes e fotos reais do seu Supabase (Máximo 6 na UI)
+        const membrosOnline = todosMembros.slice(0, 6).map(m => ({
+            nome: m.id === usuarioAuth.id ? 'Você' : m.nome.split(' ')[0],
+            foto: m.fotoUrl
+        }));
 
         return `
             <div class="w-full max-w-xl mt-4 flex flex-col gap-6 animate-[fadeIn_0.4s_ease-in-out]">
@@ -238,7 +237,7 @@ export async function renderizarInicio(abaParaAtivar = 'inicio') {
                         <h3 class="text-sm font-bold text-texto tracking-wide uppercase">Membros Online</h3>
                     </div>
                     <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 pt-1">
-                        ${membrosOnline.map(m => `
+                        ${membrosOnline.length > 0 ? membrosOnline.map(m => `
                             <div class="flex flex-col items-center gap-1.5 shrink-0">
                                 <div class="w-12 h-12 rounded-full border-2 border-green-500/50 p-[2px] relative">
                                     <div class="w-full h-full rounded-full bg-black/50 overflow-hidden flex items-center justify-center">
@@ -248,7 +247,7 @@ export async function renderizarInicio(abaParaAtivar = 'inicio') {
                                 </div>
                                 <span class="text-[10px] text-texto/70 font-medium">${m.nome}</span>
                             </div>
-                        `).join('')}
+                        `).join('') : '<p class="text-texto/30 text-xs px-2 py-2">Nenhum membro registrado.</p>'}
                     </div>
                 </div>
 
@@ -318,7 +317,7 @@ export async function renderizarInicio(abaParaAtivar = 'inicio') {
                         <div class="flex flex-col gap-2 border-t border-white/5 pt-3">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest">Confirmados (3)</span>
+                                    <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest">Confirmados (${proximaAgenda.confirmados.length})</span>
                                     <div class="avatar-stack-inicio">
                                         ${proximaAgenda.confirmados.map(c => `
                                             <div class="avatar-item-inicio">
