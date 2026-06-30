@@ -104,47 +104,51 @@ export function obterTemplateAba() {
         `;
         document.head.appendChild(style);
     }
-
+    
     // Ordenar agendas cronologicamente
     const agendasOrdenadas = [...estadoAgenda.agendas].sort((a, b) => new Date(a.dataStr) - new Date(b.dataStr));
     
     // Filtrar apenas agendas do mês selecionado para a lista
     const prefixoMesAtual = `${estadoAgenda.anoAtual}-${String(estadoAgenda.mesAtual + 1).padStart(2, '0')}`;
     const agendasDoMes = agendasOrdenadas.filter(a => a.dataStr.startsWith(prefixoMesAtual));
-
+    
     return `
-        <div id="modulo-agenda" class="w-full max-w-xl flex flex-col gap-6 animate-fadeIn h-full relative pb-32">
+        <div id="modulo-agenda" class="w-full max-w-xl h-full relative pb-32">
             
-            <div class="bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col gap-4 backdrop-blur-md shadow-2xl">
-                <div class="flex items-center justify-between">
-                    <button id="btn-mes-ant" class="w-10 h-10 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center text-texto/60 hover:text-ouro transition-colors outline-none"><i class="ph ph-caret-left text-lg"></i></button>
-                    <div class="flex flex-col items-center">
-                        <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest">Calendário</span>
-                        <h2 class="text-base font-bold text-ouro tracking-wide capitalize">${obterNomeMes(estadoAgenda.mesAtual)} ${estadoAgenda.anoAtual}</h2>
-                    </div>
-                    <button id="btn-mes-prox" class="w-10 h-10 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center text-texto/60 hover:text-ouro transition-colors outline-none"><i class="ph ph-caret-right text-lg"></i></button>
-                </div>
+            <div class="w-full flex flex-col gap-6 animate-fadeIn">
                 
-                <div class="w-full bg-black/20 rounded-xl p-4 border border-white/5">
-                    <div class="calendario-grid mb-2">
-                        ${['D','S','T','Q','Q','S','S'].map(dia => `<div class="text-[10px] font-bold text-texto/30 uppercase">${dia}</div>`).join('')}
+                <div class="bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col gap-4 backdrop-blur-md shadow-2xl">
+                    <div class="flex items-center justify-between">
+                        <button id="btn-mes-ant" class="w-10 h-10 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center text-texto/60 hover:text-ouro transition-colors outline-none"><i class="ph ph-caret-left text-lg"></i></button>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[10px] text-texto/40 font-bold uppercase tracking-widest">Calendário</span>
+                            <h2 class="text-base font-bold text-ouro tracking-wide capitalize">${obterNomeMes(estadoAgenda.mesAtual)} ${estadoAgenda.anoAtual}</h2>
+                        </div>
+                        <button id="btn-mes-prox" class="w-10 h-10 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center text-texto/60 hover:text-ouro transition-colors outline-none"><i class="ph ph-caret-right text-lg"></i></button>
                     </div>
-                    <div class="calendario-grid">
-                        ${gerarDiasCalendarioHTML()}
+                    
+                    <div class="w-full bg-black/20 rounded-xl p-4 border border-white/5">
+                        <div class="calendario-grid mb-2">
+                            ${['D','S','T','Q','Q','S','S'].map(dia => `<div class="text-[10px] font-bold text-texto/30 uppercase">${dia}</div>`).join('')}
+                        </div>
+                        <div class="calendario-grid">
+                            ${gerarDiasCalendarioHTML()}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex items-center gap-2 px-1">
-                <i class="ph-fill ph-calendar-check text-ouro text-xl"></i>
-                <h3 class="text-lg font-bold text-texto tracking-wide">Compromissos</h3>
-            </div>
+                <div class="flex items-center gap-2 px-1">
+                    <i class="ph-fill ph-calendar-check text-ouro text-xl"></i>
+                    <h3 class="text-lg font-bold text-texto tracking-wide">Compromissos</h3>
+                </div>
 
-            <div class="flex flex-col gap-4">
-                ${agendasDoMes.length > 0 
-                    ? agendasDoMes.map(agenda => renderizarCardAgenda(agenda)).join('') 
-                    : `<div class="text-center py-10 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm"><i class="ph ph-calendar-slash text-4xl text-texto/20 mb-2"></i><p class="text-texto/40 text-sm">Nenhum compromisso para este mês.</p></div>`
-                }
+                <div class="flex flex-col gap-4">
+                    ${agendasDoMes.length > 0 
+                        ? agendasDoMes.map(agenda => renderizarCardAgenda(agenda)).join('') 
+                        : `<div class="text-center py-10 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm"><i class="ph ph-calendar-slash text-4xl text-texto/20 mb-2"></i><p class="text-texto/40 text-sm">Nenhum compromisso para este mês.</p></div>`
+                    }
+                </div>
+
             </div>
 
             <button id="btn-nova-agenda" class="fixed bottom-28 right-6 w-14 h-14 bg-ouro hover:bg-ouro-brilhante rounded-full shadow-[0_4px_20px_rgba(242,183,5,0.4)] flex items-center justify-center text-fundo transition-transform hover:scale-105 active:scale-95 outline-none z-50">
@@ -153,7 +157,6 @@ export function obterTemplateAba() {
         </div>
     `;
 }
-
 // Renderiza um Card Individual de Agenda
 function renderizarCardAgenda(agenda) {
     const config = configTipos[agenda.tipo] || { corTexto: 'text-texto', corBg: 'bg-white/10', corBorda: 'border-white/20', icone: 'ph-calendar-blank' };
