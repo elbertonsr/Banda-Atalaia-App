@@ -107,3 +107,23 @@ export async function uploadFotoPerfil(userId, arquivo) {
         return { url: null, error };
     }
 }
+
+// NOVA FUNÇÃO: Busca todas as contas reais cadastradas para a listagem da banda
+export async function obterTodosPerfis() {
+    try {
+        const { data, error } = await supabase.from('perfis').select('id, nome, foto_url, funcoes').order('nome');
+        if (error) throw error;
+        return { 
+            perfis: data.map(p => ({ 
+                id: p.id, 
+                nome: p.nome, 
+                fotoUrl: p.foto_url, 
+                funcoes: p.funcoes || [] 
+            })), 
+            error: null 
+        };
+    } catch (error) {
+        console.error("Erro ao buscar todos os perfis:", error);
+        return { perfis: [], error };
+    }
+}
