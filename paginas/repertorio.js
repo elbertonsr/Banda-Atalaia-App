@@ -1,13 +1,10 @@
 // BANDA ATALAIA APP - Módulo de Repertório Atualizado
 // Arquitetura Reativa Vanilla JS com Tailwind CSS
 
-// Banco de dados em memória (Simulando o Supabase para refletir as alterações em tempo real)
-let musicasCadastradas = [
-    { id: 1, titulo: 'Bondade de Deus', artista: 'Isaías Saad', tom: 'G', estilo: 'Worship', data: '2023-08-10T12:00:00Z', letra: 'Te amo, Deus\nTua misericórdia nunca falha\nTodos os meus dias\nEstou em Tuas mãos...', info: 'Ministração espontânea após a segunda ponte.', link: 'https://youtube.com', anexo: null },
-    { id: 2, titulo: 'A Casa É Sua', artista: 'Casa Worship', tom: 'E', estilo: 'Worship', data: '2023-09-15T15:30:00Z', letra: 'O Meu coração é o Teu lugar\nFaça morada...\nE vem conduzir este lugar...', info: 'Aumentar a dinâmica da bateria no refrão final.', link: 'https://youtube.com', anexo: null },
-    { id: 3, titulo: 'Muro de Fogo', artista: 'Preto no Branco', tom: 'Am', estilo: 'Corinho de Fogo', data: '2023-10-01T10:15:00Z', letra: 'E quem é que vai deter?\nO agir do Senhor...\nTem fogo aí, tem glória aí!', info: 'Transição direta com ritmo acelerado.', link: '', anexo: null },
-    { id: 4, titulo: 'Grande é o Senhor', artista: 'Adoração e Adoradores', tom: 'D', estilo: 'Celebração', data: '2023-11-20T18:45:00Z', letra: 'Grande é o Senhor e mui digno de louvor\nNa cidade do nosso Deus...', info: 'Metais bem presentes na introdução.', link: '', anexo: null }
-];
+import { obterRepertorio, adicionarCancao, atualizarCancao, deletarCancao } from '../supabase.js';
+
+// Banco de dados em memória (Agora começa vazio e reflete o Supabase)
+let musicasCadastradas = [];
 
 // Lista de tons padronizados para seleção
 const listaTonsDisponiveis = [
@@ -16,7 +13,7 @@ const listaTonsDisponiveis = [
 
 // Lista de estilos musicais predefinidos
 const listaEstilosDisponiveis = [
-    'Worship', 'Corinho de Fogo', 'Celebração', 'Tradicional', 'Pop/Rock', 'Geral'
+    'Worship', 'Corinho de Fogo', 'Celebração', 'Tradicional', 'Pop/Rock', 'Contemporânea'
 ];
 
 // Estado atual da tela
@@ -37,7 +34,7 @@ export function obterTemplateAba() {
     return `<div id="raiz-repertorio" class="w-full h-full flex flex-col items-center"></div>`;
 }
 
-export function inicializarEventosAba() {
+export async function inicializarEventosAba() {
     // Injeção do CSS obrigatório e isolado do módulo
     if (!document.getElementById('estilos-repertorio')) {
         const style = document.createElement('style');
@@ -70,6 +67,23 @@ export function inicializarEventosAba() {
             }
         });
         listenerGlobalAdicionado = true;
+    }
+
+    // TELA DE CARREGAMENTO INICIAL
+    const raiz = document.getElementById('raiz-repertorio');
+    if (raiz) {
+        raiz.innerHTML = `
+            <div class="w-full h-full flex flex-col items-center justify-center pt-32 pb-44">
+                <i class="ph ph-spinner-gap text-4xl text-ouro animate-spin mb-4"></i>
+                <p class="text-texto/50 text-sm tracking-widest uppercase">Buscando Canções...</p>
+            </div>
+        `;
+    }
+
+    // Busca dados reais do Supabase
+    const { data } = await obterRepertorio();
+    if (data) {
+        musicasCadastradas = data;
     }
 
     renderizarInterface();
@@ -124,7 +138,7 @@ function obterBadgeEstilo(estilo) {
             cores = 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20';
             break;
     }
-    return `<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${cores}">${estilo || 'Geral'}</span>`;
+    return `<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${cores}">${estilo || 'Contemporânea'}</span>`;
 }
 
 // ==========================================
@@ -210,7 +224,8 @@ function renderizarTelaDetalhesArtista() {
 }
 
 function renderizarTelaDetalhesCancao() {
-    const musica = musicasCadastradas.find(m => m.id === estadoRepertorio.cancaoSelecionadaId);
+    // Usando conversão implícita ou toString para garantir equivalência entre UUID string e int
+    const musica = musicasCadastradas.find(m => String(m.id) === String(estadoRepertorio.cancaoSelecionadaId));
     if (!musica) return `<p class="text-center text-texto/50 py-10">Canção não encontrada.</p>`;
 
     const dataFormatada = new Date(musica.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -369,7 +384,7 @@ function renderizarTelaCadastro() {
 }
 
 function renderizarTelaEdicao() {
-    const musica = musicasCadastradas.find(m => m.id === estadoRepertorio.cancaoSelecionadaId);
+    const musica = musicasCadastradas.find(m => String(m.id) === String(estadoRepertorio.cancaoSelecionadaId));
     if (!musica) return `<p class="text-center text-texto/50 py-10">Erro ao carregar canção.</p>`;
 
     return `
@@ -602,7 +617,7 @@ function configurarEventosPrincipal() {
 
     document.querySelectorAll('.cartao-musica').forEach(cartao => {
         cartao.addEventListener('click', (e) => {
-            estadoRepertorio.cancaoSelecionadaId = parseInt(e.currentTarget.getAttribute('data-id'), 10);
+            estadoRepertorio.cancaoSelecionadaId = e.currentTarget.getAttribute('data-id');
             estadoRepertorio.abaAtiva = 'detalhes-cancao';
             renderizarInterface();
         });
@@ -623,7 +638,7 @@ function configurarEventosDetalhesArtista() {
 
     document.querySelectorAll('.cartao-musica').forEach(cartao => {
         cartao.addEventListener('click', (e) => {
-            estadoRepertorio.cancaoSelecionadaId = parseInt(e.currentTarget.getAttribute('data-id'), 10);
+            estadoRepertorio.cancaoSelecionadaId = e.currentTarget.getAttribute('data-id');
             estadoRepertorio.abaAtiva = 'detalhes-cancao';
             renderizarInterface();
         });
@@ -655,12 +670,23 @@ function configurarEventosDetalhesCancao() {
         renderizarInterface();
     });
 
-    document.getElementById('btn-deletar-cancao').addEventListener('click', () => {
+    document.getElementById('btn-deletar-cancao').addEventListener('click', async () => {
         if (confirm("Tem certeza de que deseja excluir permanentemente esta canção do repertório?")) {
-            musicasCadastradas = musicasCadastradas.filter(m => m.id !== estadoRepertorio.cancaoSelecionadaId);
-            estadoRepertorio.cancaoSelecionadaId = null;
-            estadoRepertorio.abaAtiva = 'cancoes';
-            renderizarInterface();
+            
+            const btnDeletar = document.getElementById('btn-deletar-cancao');
+            btnDeletar.innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i>`;
+            
+            const { sucesso, error } = await deletarCancao(estadoRepertorio.cancaoSelecionadaId);
+            
+            if (sucesso) {
+                musicasCadastradas = musicasCadastradas.filter(m => String(m.id) !== String(estadoRepertorio.cancaoSelecionadaId));
+                estadoRepertorio.cancaoSelecionadaId = null;
+                estadoRepertorio.abaAtiva = 'cancoes';
+                renderizarInterface();
+            } else {
+                alert("Erro ao excluir canção: " + error?.message);
+                btnDeletar.innerHTML = `<i class="ph ph-trash text-lg"></i>`;
+            }
         }
     });
 }
@@ -683,7 +709,7 @@ function configurarEventosCadastro() {
         }
     });
 
-    document.getElementById('btn-salvar-cancao').addEventListener('click', () => {
+    document.getElementById('btn-salvar-cancao').addEventListener('click', async () => {
         const titulo = document.getElementById('cad-titulo').value.trim();
         const artista = document.getElementById('cad-artista').value.trim();
         const tom = document.getElementById('cad-tom').value;
@@ -699,7 +725,6 @@ function configurarEventosCadastro() {
         }
 
         const novaCancao = {
-            id: Date.now(),
             titulo,
             artista,
             tom,
@@ -707,17 +732,24 @@ function configurarEventosCadastro() {
             letra,
             info,
             link,
-            anexo,
             data: new Date().toISOString()
         };
 
-        musicasCadastradas.push(novaCancao);
-
-        estadoRepertorio.abaAtiva = 'cancoes';
-        estadoRepertorio.termoBusca = ''; 
-        estadoRepertorio.filtro = 'recente'; 
+        const btnSalvar = document.getElementById('btn-salvar-cancao');
+        btnSalvar.textContent = "Salvando no Banco...";
         
-        renderizarInterface();
+        const { data, error } = await adicionarCancao(novaCancao);
+        
+        if (data && !error) {
+            musicasCadastradas.push(data); // Atualiza cache local
+            estadoRepertorio.abaAtiva = 'cancoes';
+            estadoRepertorio.termoBusca = ''; 
+            estadoRepertorio.filtro = 'recente'; 
+            renderizarInterface();
+        } else {
+            alert("Erro ao salvar: " + error?.message);
+            btnSalvar.textContent = "Adicionar ao Repertório";
+        }
     });
 }
 
@@ -727,7 +759,7 @@ function configurarEventosEdicao() {
         renderizarInterface();
     });
 
-    document.getElementById('btn-atualizar-cancao').addEventListener('click', () => {
+    document.getElementById('btn-atualizar-cancao').addEventListener('click', async () => {
         const titulo = document.getElementById('edit-titulo').value.trim();
         const artista = document.getElementById('edit-artista').value.trim();
         const tom = document.getElementById('edit-tom').value;
@@ -741,21 +773,23 @@ function configurarEventosEdicao() {
             return;
         }
 
-        const index = musicasCadastradas.findIndex(m => m.id === estadoRepertorio.cancaoSelecionadaId);
-        if (index !== -1) {
-            musicasCadastradas[index] = {
-                ...musicasCadastradas[index],
-                titulo,
-                artista,
-                tom,
-                estilo,
-                letra,
-                info,
-                link
-            };
-        }
+        const dadosAtualizados = { titulo, artista, tom, estilo, letra, info, link };
 
-        estadoRepertorio.abaAtiva = 'detalhes-cancao';
-        renderizarInterface();
+        const btnAtualizar = document.getElementById('btn-atualizar-cancao');
+        btnAtualizar.textContent = "Atualizando no Banco...";
+
+        const { data, error } = await atualizarCancao(estadoRepertorio.cancaoSelecionadaId, dadosAtualizados);
+
+        if (data && !error) {
+            const index = musicasCadastradas.findIndex(m => String(m.id) === String(estadoRepertorio.cancaoSelecionadaId));
+            if (index !== -1) {
+                musicasCadastradas[index] = data; // Reflete a alteração no cache local
+            }
+            estadoRepertorio.abaAtiva = 'detalhes-cancao';
+            renderizarInterface();
+        } else {
+            alert("Erro ao atualizar: " + error?.message);
+            btnAtualizar.textContent = "Salvar Alterações";
+        }
     });
 }
