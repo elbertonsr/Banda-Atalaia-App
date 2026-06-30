@@ -13,7 +13,7 @@ const listaTonsDisponiveis = [
 
 // Lista de estilos musicais predefinidos
 const listaEstilosDisponiveis = [
-    'Worship', 'Corinho de Fogo', 'Celebração', 'Tradicional', 'Pop/Rock', 'Contemporânea'
+    'Worship', 'Corinho de Fogo', 'Celebração', 'Tradicional', 'Pop/Rock', 'Geral'
 ];
 
 // Estado atual da tela
@@ -138,7 +138,7 @@ function obterBadgeEstilo(estilo) {
             cores = 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20';
             break;
     }
-    return `<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${cores}">${estilo || 'Contemporânea'}</span>`;
+    return `<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${cores}">${estilo || 'Geral'}</span>`;
 }
 
 // ==========================================
