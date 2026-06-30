@@ -201,14 +201,17 @@ function renderizarTelaPrincipal() {
         }).join('')
         : `<div class="text-center py-10"><i class="ph ph-bell-slash text-4xl text-texto/20 mb-2"></i><p class="text-texto/40 text-sm">Nenhum aviso no momento.</p></div>`;
 
-    return `
-        <div class="w-full max-w-xl flex flex-col gap-4 animate-fadeIn h-full">
-            <div class="flex items-center justify-between mb-2">
-                <h2 class="text-xl font-bold tracking-wide text-ouro">Quadro de Avisos</h2>
-                <i class="ph ph-bell-ringing text-ouro animate-bounce"></i>
-            </div>
+return `
+        <div class="w-full max-w-xl h-full relative">
+            
+            <div class="w-full flex flex-col gap-4 animate-fadeIn">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold tracking-wide text-ouro">Quadro de Avisos</h2>
+                    <i class="ph ph-bell-ringing text-ouro animate-bounce"></i>
+                </div>
 
-            <div class="flex flex-col gap-4 pb-36"> ${listaHtml}
+                <div class="flex flex-col gap-4 pb-36"> ${listaHtml}
+                </div>
             </div>
 
             <button id="btn-novo-aviso" class="fixed bottom-28 right-6 w-14 h-14 bg-ouro hover:bg-ouro-brilhante rounded-full shadow-[0_4px_20px_rgba(242,183,5,0.4)] flex items-center justify-center text-fundo transition-transform hover:scale-105 active:scale-95 outline-none z-50">
