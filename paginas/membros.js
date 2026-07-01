@@ -1,234 +1,81 @@
-import { obterUsuarioAtual, obterPerfilMembro, atualizarPerfilMembro, atualizarSenhaUsuario, uploadFotoPerfil, logoutUsuario } from '../supabase.js';
+import { renderizarInicio } from './inicio.js';
+import { obterTodosPerfis } from '../supabase.js';
 
-export async function renderizarPerfil() {
+export async function renderizarMembros() {
     const app = document.getElementById('app');
     
-    const usuarioAuth = await obterUsuarioAtual();
-    if (!usuarioAuth) {
-        const modulo = await import('./autenticacao.js');
-        modulo.renderizarAutenticacao();
-        return;
-    }
-    
-    let usuario = { id: usuarioAuth.id, nome: "Carregando...", fotoUrl: "", funcoes: [] };
-    
-    const { perfil } = await obterPerfilMembro(usuario.id);
-    if (perfil) {
-        usuario.nome = perfil.nome;
-        usuario.fotoUrl = perfil.fotoUrl;
-        usuario.funcoes = perfil.funcoes;
-    }
-    
-    const funcoesDisponiveis = [
-        { nome: 'Líder', icone: 'ph-fill ph-crown' }, { nome: 'Vice Líder', icone: 'ph-fill ph-star' },
-        { nome: 'Vocalista', icone: 'ph-fill ph-microphone-stage' }, { nome: 'Guitarrista', icone: 'ph-fill ph-guitar' },
-        { nome: 'Contrabaixista', icone: 'ph-fill ph-guitar' }, { nome: 'Baterista', icone: 'ph-fill ph-drum' },
-        { nome: 'Tecladista', icone: 'ph-fill ph-piano' }, { nome: 'Diretor Musical', icone: 'music-notes-plus' }
-    ];
-    
-    let menuFotoAberto = false;
-    
-    function exibirTelaPrincipal() {
-        app.innerHTML = `
-            <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
-                <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[120px] opacity-10 pointer-events-none z-0"></div>
+    // TELA DE LOADING PRESERVANDO O DESIGN GLASSMORPHISM
+    app.innerHTML = `
+        <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
+            <div class="fixed top-[-10%] right-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[120px] opacity-10 pointer-events-none z-0"></div>
 
-                <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
-                    <button id="btn-voltar-inicio" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center transition-all outline-none">
-                        <i class="ph ph-arrow-left text-xl text-texto"></i>
-                    </button>
-                    <span class="text-sm font-bold text-ouro tracking-widest uppercase">Perfil do Membro</span>
-                    <button id="btn-logout" class="w-10 h-10 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/10 flex items-center justify-center transition-all outline-none" title="Sair do Aplicativo">
-                        <i class="ph ph-sign-out text-xl text-red-400"></i>
-                    </button>
-                </header>
+            <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
+                <button id="btn-membros-voltar-loading" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center transition-all outline-none">
+                    <i class="ph ph-arrow-left text-xl text-texto"></i>
+                </button>
+                <span class="text-sm font-bold text-ouro tracking-widest uppercase">Membros da Banda</span>
+                <div class="w-10 h-10"></div>
+            </header>
 
-                <div class="w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-[2rem] flex flex-col items-center shadow-2xl relative z-10">
-                    <div class="relative mb-6">
-                        <div class="w-28 h-28 rounded-full border-2 border-ouro p-1 bg-black/40 flex items-center justify-center overflow-hidden shadow-[0_0_25px_rgba(242,183,5,0.2)] relative">
-                            ${usuario.fotoUrl ? `<img src="${usuario.fotoUrl}" class="w-full h-full object-cover rounded-full">` : `<i class="ph-fill ph-user text-5xl text-ouro-claro"></i>`}
-                            <div id="overlay-loading-foto" class="hidden absolute inset-0 bg-black/70 rounded-full flex items-center justify-center backdrop-blur-sm transition-all">
-                                <i class="ph ph-spinner-gap text-2xl text-ouro animate-spin"></i>
+            <div class="w-full max-w-md flex flex-col items-center justify-center mt-20 relative z-10 animate-[fadeIn_0.3s_ease-in-out]">
+                <i class="ph ph-spinner-gap text-4xl text-ouro animate-spin mb-4"></i>
+                <p class="text-texto/50 text-sm tracking-widest uppercase">Buscando banco de dados...</p>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('btn-membros-voltar-loading').addEventListener('click', () => {
+        renderizarInicio();
+    });
+    
+    // BUSCA DADOS REAIS DO SUPABASE
+    const { perfis } = await obterTodosPerfis();
+    const equipe = perfis || [];
+    
+    // Checa se o usuário voltou para a home enquanto os dados carregavam
+    if (!document.getElementById('btn-membros-voltar-loading')) return;
+    
+    // TELA FINAL COM OS MEMBROS REAIS
+    app.innerHTML = `
+        <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
+            <div class="fixed top-[-10%] right-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[120px] opacity-10 pointer-events-none z-0"></div>
+
+            <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
+                <button id="btn-membros-voltar" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center transition-all outline-none">
+                    <i class="ph ph-arrow-left text-xl text-texto"></i>
+                </button>
+                <span class="text-sm font-bold text-ouro tracking-widest uppercase">Membros da Banda</span>
+                <div class="w-10 h-10"></div>
+            </header>
+
+            <div class="w-full max-w-md flex flex-col gap-4 relative z-10 animate-[fadeIn_0.3s_ease-in-out]">
+                <span class="text-xs text-texto/40 font-bold uppercase tracking-widest px-1">Equipe de Louvor (${equipe.length})</span>
+                
+                ${equipe.length > 0 ? equipe.map(membro => `
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-4 shadow-md backdrop-blur-md">
+                        <div class="w-12 h-12 rounded-full border border-ouro/30 bg-black/50 flex items-center justify-center overflow-hidden shrink-0">
+                            ${membro.fotoUrl ? `<img src="${membro.fotoUrl}" class="w-full h-full object-cover">` : `<i class="ph-fill ph-user text-xl text-ouro-claro"></i>`}
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <h3 class="text-sm font-bold text-texto">${membro.nome}</h3>
+                            <div class="flex flex-wrap gap-1">
+                                ${membro.funcoes && membro.funcoes.length > 0 
+                                    ? membro.funcoes.map(f => `<span class="text-[9px] bg-ouro/10 text-ouro-claro border border-ouro/20 font-bold px-2 py-0.5 rounded-full">${f}</span>`).join('') 
+                                    : '<span class="text-[9px] text-texto/30 italic">Sem função registrada</span>'}
                             </div>
                         </div>
-                        <button id="btn-menu-foto" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-ouro hover:bg-ouro-brilhante text-fundo flex items-center justify-center shadow-lg border border-fundo transition-all outline-none active:scale-95">
-                            <i class="ph-fill ph-camera text-base"></i>
-                        </button>
-                        <div id="dropdown-foto" class="${menuFotoAberto ? 'flex' : 'hidden'} absolute top-full right-0 mt-2 w-48 bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl flex-col p-2 shadow-2xl z-50 animate-[fadeIn_0.2s_ease-in-out]">
-                            <input type="file" id="input-upload-foto" accept="image/*" class="hidden" />
-                            <button id="opt-importar-foto" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-left text-texto hover:bg-white/5 transition-colors outline-none"><i class="ph ph-upload-simple text-base text-ouro"></i> Nova Foto</button>
-                            <button id="opt-remover-foto" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-left text-red-400 hover:bg-red-500/10 transition-colors outline-none"><i class="ph ph-trash text-base"></i> Remover Foto</button>
-                        </div>
                     </div>
-
-                    <h2 class="text-2xl font-bold text-texto text-center tracking-wide mb-1">${usuario.nome}</h2>
-                    <span class="text-[11px] text-ouro-claro font-bold tracking-widest uppercase bg-ouro-escuro/30 px-4 py-1 rounded-full border border-ouro-escuro/40 mb-8">Banda Atalaia</span>
-
-                    <div class="w-full border-t border-white/5 pt-6 mb-8">
-                        <h3 class="text-xs font-bold text-texto/40 uppercase tracking-widest mb-4">Funções e Ministérios</h3>
-                        <div class="grid grid-cols-2 gap-3">
-                            ${funcoesDisponiveis.map(f => {
-                                if (!usuario.funcoes.includes(f.nome)) return ''; 
-                                return `<div class="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-3 rounded-xl shadow-inner"><div class="w-8 h-8 rounded-lg bg-ouro/10 flex items-center justify-center border border-ouro/20"><i class="${f.icone} text-base text-ouro"></i></div><span class="text-xs font-medium text-texto/80 tracking-wide">${f.nome}</span></div>`;
-                            }).join('')}
-                        </div>
+                `).join('') : `
+                    <div class="flex flex-col items-center justify-center py-10">
+                        <i class="ph ph-users-slash text-4xl text-texto/30 mb-3"></i>
+                        <p class="text-texto/50 text-sm text-center">Nenhum membro registrado ainda.</p>
                     </div>
-
-                    <button id="btn-abrir-edicao" class="w-full bg-ouro hover:bg-ouro-brilhante text-fundo font-bold text-sm tracking-widest uppercase py-4 rounded-xl transition-all shadow-[0_4px_20px_rgba(242,183,5,0.2)] active:scale-[0.98] outline-none">Editar Perfil</button>
-                </div>
+                `}
             </div>
-        `;
-        configurarEventosPrincipais();
-    }
+        </div>
+    `;
     
-    function exibirTelaEdicao() {
-        app.innerHTML = `
-            <div class="min-h-screen bg-fundo relative font-sans text-texto select-none overflow-x-hidden pt-24 pb-12 px-6 flex flex-col items-center">
-                <div class="fixed top-[-10%] right-[-10%] w-96 h-96 bg-ouro rounded-full filter blur-[120px] opacity-10 pointer-events-none z-0"></div>
-
-                <header class="fixed top-0 left-0 w-full z-50 bg-fundo/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
-                    <button id="btn-cancelar-edicao" class="text-sm font-medium text-texto/50 hover:text-texto transition-colors outline-none">Cancelar</button>
-                    <span class="text-sm font-bold text-ouro tracking-widest uppercase">Modo Edição</span>
-                    <button id="btn-salvar-edicao" class="text-sm font-bold text-ouro hover:text-ouro-brilhante transition-colors outline-none">Salvar</button>
-                </header>
-
-                <div class="w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-[2rem] flex flex-col shadow-2xl relative z-10">
-                    <div class="flex flex-col gap-2 mb-5">
-                        <label class="text-xs font-bold text-texto/40 uppercase tracking-widest">Nome do Usuário</label>
-                        <div class="relative flex items-center">
-                            <i class="ph ph-user absolute left-4 text-lg text-texto/40"></i>
-                            <input type="text" id="input-nome" value="${usuario.nome}" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-texto focus:border-ouro/50 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-2 mb-6">
-                        <label class="text-xs font-bold text-texto/40 uppercase tracking-widest">Nova Senha</label>
-                        <div class="relative flex items-center">
-                            <i class="ph ph-lock absolute left-4 text-lg text-texto/40"></i>
-                            <input type="password" id="input-senha" placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-texto focus:border-ouro/50 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-2 border-t border-white/5 pt-5">
-                        <label class="text-xs font-bold text-texto/40 uppercase tracking-widest mb-2">Gerenciar Funções</label>
-                        <div class="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
-                            ${funcoesDisponiveis.map(f => {
-                                const marcado = usuario.funcoes.includes(f.nome) ? 'checked' : '';
-                                return `<label class="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5 cursor-pointer hover:bg-white/[0.02] transition-colors"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10"><i class="${f.icone} text-base text-ouro-claro"></i></div><span class="text-xs font-medium text-texto">${f.nome}</span></div><input type="checkbox" value="${f.nome}" ${marcado} class="w-4 h-4 rounded accent-ouro cursor-pointer input-funcao-check"></label>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        configurarEventosEdicao();
-    }
-    
-    function configurarEventosPrincipais() {
-        document.getElementById('btn-voltar-inicio').addEventListener('click', async () => {
-            const modulo = await import('./inicio.js');
-            modulo.renderizarInicio();
-        });
-        
-        document.getElementById('btn-logout').addEventListener('click', async () => {
-            if (confirm("Deseja encerrar sua sessão?")) {
-                await logoutUsuario();
-                const modulo = await import('./autenticacao.js');
-                modulo.renderizarAutenticacao();
-            }
-        });
-        
-        const btnMenuFoto = document.getElementById('btn-menu-foto');
-        const dropdownFoto = document.getElementById('dropdown-foto');
-        const inputUploadFoto = document.getElementById('input-upload-foto');
-        
-        btnMenuFoto.addEventListener('click', (e) => {
-            e.stopPropagation();
-            menuFotoAberto = !menuFotoAberto;
-            dropdownFoto.classList.toggle('hidden', !menuFotoAberto);
-            dropdownFoto.classList.toggle('flex', menuFotoAberto);
-        });
-        
-        document.addEventListener('click', () => {
-            if (menuFotoAberto) {
-                menuFotoAberto = false;
-                dropdownFoto.classList.add('hidden');
-            }
-        });
-        
-        document.getElementById('opt-importar-foto').addEventListener('click', () => inputUploadFoto.click());
-        
-        inputUploadFoto.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const overlay = document.getElementById('overlay-loading-foto');
-            if (overlay) overlay.classList.remove('hidden');
-            
-            const { url, error } = await uploadFotoPerfil(usuario.id, file);
-            
-            if (url && !error) {
-                usuario.fotoUrl = url;
-                await atualizarPerfilMembro(usuario.id, { nome: usuario.nome, fotoUrl: usuario.fotoUrl, funcoes: usuario.funcoes });
-                renderizarPerfil();
-            } else {
-                console.error("Erro no retorno do Supabase Storage:", error);
-                alert(`Erro ao enviar foto: ${error?.message || 'Causa provável: o bucket "avatars" não foi criado ou não está como Público no Supabase.'}`);
-                if (overlay) overlay.classList.add('hidden');
-            }
-        });
-        
-        document.getElementById('opt-remover-foto').addEventListener('click', async () => {
-            if (confirm("Remover foto de perfil?")) {
-                usuario.fotoUrl = "";
-                await atualizarPerfilMembro(usuario.id, { nome: usuario.nome, fotoUrl: "", funcoes: usuario.funcoes });
-                renderizarPerfil();
-            }
-        });
-        
-        document.getElementById('btn-abrir-edicao').addEventListener('click', () => exibirTelaEdicao());
-    }
-    
-    function configurarEventosEdicao() {
-        document.getElementById('btn-cancelar-edicao').addEventListener('click', () => exibirTelaPrincipal());
-        
-        document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
-            const novoNome = document.getElementById('input-nome').value.trim();
-            const novaSenha = document.getElementById('input-senha').value.trim();
-            
-            if (!novoNome) return alert("O campo Nome é obrigatório.");
-            
-            const checkboxes = document.querySelectorAll('.input-funcao-check:checked');
-            const novasFuncoes = Array.from(checkboxes).map(cb => cb.value);
-            
-            if (novaSenha) {
-                if (novaSenha.length < 6) return alert("A senha precisa ter no mínimo 6 dígitos.");
-                await atualizarSenhaUsuario(novaSenha);
-            }
-            
-            const { sucesso } = await atualizarPerfilMembro(usuario.id, {
-                nome: novoNome,
-                fotoUrl: usuario.fotoUrl,
-                funcoes: novasFuncoes
-            });
-            
-            if (sucesso) renderizarPerfil();
-            else alert("Erro ao salvar os dados.");
-        });
-    }
-    
-    if (!document.getElementById('estilos-perfil')) {
-        const style = document.createElement('style');
-        style.id = 'estilos-perfil';
-        style.innerHTML = `
-            @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-            *, *::before, *::after { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
-            input { -webkit-user-select: text; user-select: text; }
-            button, a, i, div, label { -webkit-tap-highlight-color: transparent; }
-            html, body, #app { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    exibirTelaPrincipal();
+    document.getElementById('btn-membros-voltar').addEventListener('click', () => {
+        renderizarInicio();
+    });
 }
