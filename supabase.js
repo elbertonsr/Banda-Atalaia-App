@@ -23,7 +23,9 @@ try {
         },
         from: () => ({
             select: () => ({ eq: () => ({ single: async () => ({ error: { message: "Offline" } }), order: () => ({}) }) }),
-            update: () => ({ eq: async () => ({ error: { message: "Offline" } }) })
+            update: () => ({ eq: async () => ({ error: { message: "Offline" } }) }),
+            insert: () => ({ select: () => ({ single: async () => ({ error: { message: "Offline" } }) }) }),
+            delete: () => ({ eq: async () => ({ error: { message: "Offline" } }) })
         }),
         storage: {
             from: () => ({
@@ -113,17 +115,67 @@ export async function obterTodosPerfis() {
     try {
         const { data, error } = await supabase.from('perfis').select('id, nome, foto_url, funcoes').order('nome');
         if (error) throw error;
-        return { 
-            perfis: data.map(p => ({ 
-                id: p.id, 
-                nome: p.nome, 
-                fotoUrl: p.foto_url, 
-                funcoes: p.funcoes || [] 
-            })), 
-            error: null 
+        return {
+            perfis: data.map(p => ({
+                id: p.id,
+                nome: p.nome,
+                fotoUrl: p.foto_url,
+                funcoes: p.funcoes || []
+            })),
+            error: null
         };
     } catch (error) {
         console.error("Erro ao buscar todos os perfis:", error);
         return { perfis: [], error };
+    }
+}
+
+// ==========================================
+// MÓDULO REPERTÓRIO (SUPABASE CRUD)
+// ==========================================
+
+export async function obterRepertorio() {
+    try {
+        const { data, error } = await supabase.from('repertorio').select('*').order('data', { ascending: false });
+        if (error) throw error;
+        return { data, error: null };
+    } catch (error) {
+        console.error("Erro ao buscar repertório:", error);
+        return { data: [], error };
+    }
+}
+
+export async function adicionarCancao(cancao) {
+    try {
+        // Removemos o id temporário se existir, para o banco gerar o UUID/ID real
+        const { id, ...dadosInsercao } = cancao;
+        const { data, error } = await supabase.from('repertorio').insert([dadosInsercao]).select().single();
+        if (error) throw error;
+        return { data, error: null };
+    } catch (error) {
+        console.error("Erro ao adicionar canção:", error);
+        return { data: null, error };
+    }
+}
+
+export async function atualizarCancao(id, cancao) {
+    try {
+        const { data, error } = await supabase.from('repertorio').update(cancao).eq('id', id).select().single();
+        if (error) throw error;
+        return { data, error: null };
+    } catch (error) {
+        console.error("Erro ao atualizar canção:", error);
+        return { data: null, error };
+    }
+}
+
+export async function deletarCancao(id) {
+    try {
+        const { error } = await supabase.from('repertorio').delete().eq('id', id);
+        if (error) throw error;
+        return { sucesso: true, error: null };
+    } catch (error) {
+        console.error("Erro ao deletar canção:", error);
+        return { sucesso: false, error };
     }
 }
